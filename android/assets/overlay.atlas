@@ -1,0 +1,61 @@
+
+overlay.png
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+buttonDown
+  rotate: false
+  xy: 1, 33
+  size: 130, 30
+  orig: 130, 30
+  offset: 0, 0
+  index: -1
+buttonUp
+  rotate: false
+  xy: 1, 1
+  size: 130, 30
+  orig: 130, 30
+  offset: 0, 0
+  index: -1
+mainMenuDown
+  rotate: false
+  xy: 133, 33
+  size: 130, 30
+  orig: 130, 30
+  offset: 0, 0
+  index: -1
+mainMenuUp
+  rotate: false
+  xy: 133, 1
+  size: 130, 30
+  orig: 130, 30
+  offset: 0, 0
+  index: -1
+restartDown
+  rotate: false
+  xy: 265, 33
+  size: 130, 30
+  orig: 130, 30
+  offset: 0, 0
+  index: -1
+restartUp
+  rotate: false
+  xy: 265, 1
+  size: 130, 30
+  orig: 130, 30
+  offset: 0, 0
+  index: -1
+resumeDown
+  rotate: false
+  xy: 397, 33
+  size: 130, 30
+  orig: 130, 30
+  offset: 0, 0
+  index: -1
+resumeUp
+  rotate: false
+  xy: 397, 1
+  size: 130, 30
+  orig: 130, 30
+  offset: 0, 0
+  index: -1

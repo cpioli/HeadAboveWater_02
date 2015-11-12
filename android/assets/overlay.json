@@ -1,0 +1,7 @@
+ {
+    com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle: {
+        overlayRestart: { imageOver: restartDown, imageUp: restartUp, imageDown: restartUp },
+        overlayMainMenu: { imageOver: mainMenuDown, imageUp: mainMenuUp, imageDown: mainMenuUp },
+        overlayResume: { imageOver: resumeDown, imageUp: resumeUp, imageDown: resumeUp }
+    }
+}

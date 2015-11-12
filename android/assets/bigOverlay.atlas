@@ -1,0 +1,47 @@
+
+bigOverlay.png
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+bigMainMenuSelected
+  rotate: false
+  xy: 1, 63
+  size: 260, 60
+  orig: 260, 60
+  offset: 0, 0
+  index: -1
+bigMainMenuUnselected
+  rotate: false
+  xy: 1, 1
+  size: 260, 60
+  orig: 260, 60
+  offset: 0, 0
+  index: -1
+bigRestartSelected
+  rotate: false
+  xy: 263, 63
+  size: 260, 60
+  orig: 260, 60
+  offset: 0, 0
+  index: -1
+bigRestartUnselected
+  rotate: false
+  xy: 263, 1
+  size: 260, 60
+  orig: 260, 60
+  offset: 0, 0
+  index: -1
+bigResumeSelected
+  rotate: false
+  xy: 525, 63
+  size: 260, 60
+  orig: 260, 60
+  offset: 0, 0
+  index: -1
+bigResumeUnselected
+  rotate: false
+  xy: 525, 1
+  size: 260, 60
+  orig: 260, 60
+  offset: 0, 0
+  index: -1

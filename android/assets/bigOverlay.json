@@ -1,0 +1,7 @@
+ {
+    com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle: {
+        overlayRestart: { imageOver: bigRestartSelected, imageUp: bigRestartUnselected, imageDown: bigRestartUnselected },
+        overlayMainMenu: { imageOver: bigMainMenuSelected, imageUp: bigMainMenuUnselected, imageDown: bigMainMenuUnselected },
+        overlayResume: { imageOver: bigResumeSelected, imageUp: bigResumeUnselected, imageDown: bigResumeUnselected }
+    }
+}
