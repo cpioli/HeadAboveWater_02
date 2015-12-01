@@ -12,7 +12,6 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Vector2;
@@ -41,7 +40,7 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cpioli.headabovewater.Assets;
 import com.cpioli.headabovewater.HeadAboveWater02;
-import com.cpioli.headabovewater.actors.Swimmer;
+import com.cpioli.headabovewater.ui.Swimmer;
 import com.cpioli.headabovewater.ui.Border;
 import com.cpioli.headabovewater.ui.OxygenMeter;
 import com.cpioli.headabovewater.ui.ProgressBar;
@@ -493,10 +492,10 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		
 		if(keycode == Keys.V){
 			//toggle infinite Stamina
-			if(swimmer.getStrokesPerBar() == 18.0f) {
-				swimmer.setStrokesPerBar(5000.0f);
-			} else if (swimmer.getStrokesPerBar() == 5000.0f) {
-				swimmer.setStrokesPerBar(18.0f);
+			if(swimmer.getMaxStrokesInFullBar() == 18.0f) {
+				swimmer.setMaxStrokesInFullBar(5000.0f);
+			} else if (swimmer.getMaxStrokesInFullBar() == 5000.0f) {
+				swimmer.setMaxStrokesInFullBar(18.0f);
 			}
 		}
 		
@@ -609,9 +608,7 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		
 		
 		
-		//I've realized the best way (for now...) to handle the swimming above water level issue
-		//is to create a static body that lies just above the riverstream.
-		
+		//Sky vertices are for a physics box to keep the Swimmer on top of the water surface
 		float[] skyVertices = { -16.0f, 1.0f,
 								248.0f, 1.0f,
 								248.0f, 1.75f,
@@ -646,15 +643,12 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		swimmerFixture.setUserData(swimmer);
 		swimmerPoly.dispose();
 		
-		/*
-		 * The ContactListener doubles the amount of RAM consumed and causes the game to lag.
-		 * I'm not using this period!
-		 * 
-		 **/ world.setContactListener(new ContactListener() {
+		world.setContactListener(new ContactListener() {
 			
 			@Override
 			public void beginContact(Contact contact) {
-				swimmer.onRiverbed = true;
+				System.out.println("Landed on riverbed!");
+				swimmer.setSubmergedState(Swimmer.SubmergedState.SWIMMER_ON_RIVERBED);
 			}
 			
 			@Override

@@ -1,4 +1,4 @@
-package com.cpioli.headabovewater.actors;
+package com.cpioli.headabovewater.ui;
 
 import java.util.ArrayList;
 import com.badlogic.gdx.audio.Sound;
@@ -26,40 +26,38 @@ import com.cpioli.headabovewater.utils.GameOverSubject;
  */
 public class Swimmer implements Disposable, GameOverSubject {
 
+	//Swimmer's state in-game
 	public enum SubmergedState {SWIMMER_ABOVE_WATER, SWIMMER_UNDER_WATER, SWIMMER_ON_RIVERBED};
 	private SubmergedState submergedState;
 
+	//OXYGEN variables
 	public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
 	private OxygenConsumptionState oxygenBarState;
 	private float O2LossDuration = 20.0f; //in seconds (it's shorter for testing purposes)
 	private float O2RestorationTime = 4.5f;
 
+	//STAMINA
+	/*
+	 * RULES ABOUT STAMINA
+	 * 1) Stamina can't be replenished and consumed at the same time
+	 * 2) Stamina replenishing is delayed for 5 seconds if the player exhausts it COMPLETELY
+	 * 3) 16 strokes will consume the entire stamina bar
+	 * 4) moving forward on the riverbed consumes more stamina than moving forward on the water's surface by a factor of 3
+	 * 5) Stamina will restore to full in 20 seconds from 0 if you rest at the bottom of the riverbed (AFTER your 5 seconds delay is up)
+	 */
+	//TODO: Move StaminaConsumptionState into StaminaMeter.java?
 	public enum StaminaConsumptionState {EMPTY, REPLENISHING, MIDSTROKE, FULL}
 	private StaminaConsumptionState staminaBarState;
+	private float maxStrokesInFullBar = 16.0f;
 
-	//number of strokes one can accomplish with a full stamina bar
-	private float strokesPerBar = 16.0f;
-
-
-	private float staminaLoss_MoveRiverbed = 3.0f;
 	private float staminaRestorationTime = 10.0f; //in seconds
 	float levelLength = 250.0f;
 	
 	private float timeBetweenStroke; //this is a timer. It is used to determine when stamina begins refilling
 	private float staminaExhaustionRecovery = 5.0f;
 	private float staminaDefaultRecovery = 2.0f;
-	/*
-	 * RULES ABOUT STAMINA
-	 * 1) Stamina can't be replenished and consumed at the same time
-	 * 2) Stamina replenishing is delayed for 5 seconds if the player exhausts it COMPLETELY
-	 * 3) X amount of strokes will consume the entire stamina bar
-	 * 4) moving forward on the riverbed consumes more stamina than moving forward on the water's surface by a factor of 3
-	 * 5) Stamina will restore to full in 20 seconds from 0 if you rest at the bottom of the riverbed (AFTER your 5 seconds delay is up)
-	 */
-	//int submergedState;
-	//int oxygenState;
-	//int staminaState;
-	public boolean onRiverbed;
+
+	//public boolean onRiverbed;
 	
 	boolean gamePaused;
 	float pausedYVelocity;
@@ -112,7 +110,6 @@ public class Swimmer implements Disposable, GameOverSubject {
 		
 		gamePaused = false;
 		pausedYVelocity = 0.0f;
-		onRiverbed = false;
 		triggeredVO_02 = false;
 		triggeredVO_03 = false;
 		vo_speaking = false;
@@ -132,7 +129,7 @@ public class Swimmer implements Disposable, GameOverSubject {
 		//position.y += myMoveByAction.getAmountY();
 		
 		//calculating swimmer's movement along the x axis
-		if(!onRiverbed) {
+		if(submergedState != SubmergedState.SWIMMER_ON_RIVERBED) {
 			if(goingLeft && goingRight) {
 				body.setLinearVelocity(0.0f, body.getLinearVelocity().y);
 			} else if(goingRight) {
@@ -155,6 +152,7 @@ public class Swimmer implements Disposable, GameOverSubject {
 		
 		//HERE WE WILL UPDATE THE OXYGEN METER
 		float deltaO2;
+		//TODO: move a lot of this code to the OxygenMeter class! It should be invisible to the Swimmer class!
 		switch(submergedState) {
 		case SWIMMER_UNDER_WATER:
 			if(oxygenBarState != OxygenConsumptionState.EMPTY){
@@ -225,6 +223,9 @@ public class Swimmer implements Disposable, GameOverSubject {
 		
 		float deltaStamina;
 		//HERE WE WILL UPDATE THE STAMINA METER
+		//TODO: all this should take place in the StaminaMeter class!
+		//the only code here should be
+		//staminaBar.update(StaminaConsumptionState)
 		if(staminaBarState == StaminaConsumptionState.EMPTY) {
 			//stamina is empty, and we're clocking in time
 			timeBetweenStroke += deltaTime;
@@ -243,7 +244,7 @@ public class Swimmer implements Disposable, GameOverSubject {
 				staminaMeter.meterFill.setWidth(deltaStamina);
 			}
 		} else if (staminaBarState == StaminaConsumptionState.REPLENISHING){
-			if(!onRiverbed || body.getLinearVelocity().x == 0.0f) {
+			if(this.submergedState != SubmergedState.SWIMMER_ON_RIVERBED || body.getLinearVelocity().x == 0.0f) {
 				deltaStamina = staminaMeter.meterFill.getWidth() + staminaMeter.getMaxFill() / staminaRestorationTime * deltaTime;
 				if(deltaStamina >= staminaMeter.getMaxFill()) {
 					staminaBarState = StaminaConsumptionState.FULL;
@@ -335,13 +336,13 @@ public class Swimmer implements Disposable, GameOverSubject {
 				strokeSound.setVolume(id, 0.4f);
 			}
 			timeBetweenStroke = 0.0f;
-			if(staminaMeter.meterFill.getWidth() <= (staminaMeter.getMaxFill() / strokesPerBar)) { //we'll be emptying our stamina
+			if(staminaMeter.meterFill.getWidth() <= (staminaMeter.getMaxFill() / maxStrokesInFullBar)) { //we'll be emptying our stamina
 				staminaMeter.meterFill.setWidth(0.0f);
 				staminaBarState = StaminaConsumptionState.EMPTY;
 			} else { //consume another portion of stamina
 				body.setLinearVelocity(body.getLinearVelocity().x, 2.5f);
 				//consume stamina
-				staminaMeter.meterFill.setWidth(staminaMeter.meterFill.getWidth() - staminaMeter.getMaxFill() / strokesPerBar);
+				staminaMeter.meterFill.setWidth(staminaMeter.meterFill.getWidth() - staminaMeter.getMaxFill() / maxStrokesInFullBar);
 				staminaBarState = StaminaConsumptionState.MIDSTROKE;
 				timeBetweenStroke = 0.0f;//we just made a stroke, the timer is reset
 			}
@@ -349,7 +350,6 @@ public class Swimmer implements Disposable, GameOverSubject {
 			if(submergedState == SubmergedState.SWIMMER_ON_RIVERBED) {
 				submergedState = SubmergedState.SWIMMER_UNDER_WATER;
 			}
-			onRiverbed = false;
 		}
 	}
 	
@@ -423,12 +423,12 @@ public class Swimmer implements Disposable, GameOverSubject {
 	}
 
 	//cheat code functions
-	public float getStrokesPerBar() {
-		return strokesPerBar;
+	public float getMaxStrokesInFullBar() {
+		return maxStrokesInFullBar;
 	}
 
-	public void setStrokesPerBar(float strokesPerBar) {
-		this.strokesPerBar = strokesPerBar;
+	public void setMaxStrokesInFullBar(float maxStrokesInFullBar) {
+		this.maxStrokesInFullBar = maxStrokesInFullBar;
 	}
 	
 	public float getO2LossDuration() {
@@ -437,5 +437,9 @@ public class Swimmer implements Disposable, GameOverSubject {
 
 	public void setO2LossDuration(float o2LossDuration) {
 		O2LossDuration = o2LossDuration;
+	}
+
+	public void setSubmergedState(SubmergedState state) {
+		this.submergedState = state;
 	}
 }
