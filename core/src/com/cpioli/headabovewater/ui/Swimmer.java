@@ -24,13 +24,14 @@ import com.cpioli.headabovewater.utils.GameOverSubject;
  * 1. remember that the head is nine pixels tall in the 32x32 texture
  * 2. that would mean the head is 15.75 pixels in height. Round it out to 16.
  */
-public class Swimmer implements Disposable, GameOverSubject {
+public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 
 	//Swimmer's state in-game
 	public enum SubmergedState {SWIMMER_ABOVE_WATER, SWIMMER_UNDER_WATER, SWIMMER_ON_RIVERBED};
 	private SubmergedState submergedState;
 
 	//OXYGEN variables
+	//TODO: move all oxygen variables into oxygen class
 	public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
 	private OxygenConsumptionState oxygenBarState;
 	private float O2LossDuration = 20.0f; //in seconds (it's shorter for testing purposes)
@@ -74,27 +75,21 @@ public class Swimmer implements Disposable, GameOverSubject {
 	private Sound strokeSound; //either underwater or surface
 	
 	private Body body;
-	private Fixture fixture;
-	
+
 	OrthographicCamera camera;
 	OxygenMeter oxygenMeter;
 	StaminaMeter staminaMeter;
 	ProgressBar progressBar;
 	public Texture playerTexture;
 	
-	public Swimmer(Texture texture, OrthographicCamera camera,
-			OxygenMeter oxygenMeter, StaminaMeter staminaMeter, ProgressBar
-			progressBar, Body body, float startingX, float startingY) {
-		//super();
+	public Swimmer(OrthographicCamera camera, OxygenMeter oxygenMeter, StaminaMeter staminaMeter,
+				   ProgressBar progressBar, Body body) {
 		waterGravity = new Vector2(0.0f, 2.6f); //this is a very rough guess
 		location = new Vector2(body.getPosition().x, body.getPosition().y); //new Vector2(body.getPosition());
 		this.camera = camera;
 		viewportLoc = new Vector2(0.0f, 0.0f);
-		
-		
-		//observers = new ArrayList<SubmergedObserver>();
 		observers = new ArrayList<GameOverObserver>();
-		this.playerTexture = texture;
+		playerTexture = Assets.playerTexture;
 		this.body = body;
 		this.oxygenMeter = oxygenMeter;
 		this.staminaMeter = staminaMeter;
@@ -105,7 +100,6 @@ public class Swimmer implements Disposable, GameOverSubject {
 		staminaBarState = StaminaConsumptionState.FULL;
 		Assets.aboveSurfaceAmbience.setLooping(true);
 		Assets.belowSurfaceAmbience.setLooping(true);
-		//Assets.belowSurfaceAmbience.setVolume(0.25f);
 		Assets.aboveSurfaceAmbience.play();
 		
 		gamePaused = false;
@@ -113,6 +107,8 @@ public class Swimmer implements Disposable, GameOverSubject {
 		triggeredVO_02 = false;
 		triggeredVO_03 = false;
 		vo_speaking = false;
+
+		//oxygenMeter.registerObserver((OxygenObserver)this);
 		
 	}
 	
@@ -128,27 +124,7 @@ public class Swimmer implements Disposable, GameOverSubject {
 		//myMoveByAction.updateRelative(float percentDelta)
 		//position.y += myMoveByAction.getAmountY();
 		
-		//calculating swimmer's movement along the x axis
-		if(submergedState != SubmergedState.SWIMMER_ON_RIVERBED) {
-			if(goingLeft && goingRight) {
-				body.setLinearVelocity(0.0f, body.getLinearVelocity().y);
-			} else if(goingRight) {
-				body.setLinearVelocity(2.0f, body.getLinearVelocity().y);
-			} else if(goingLeft) {//it reaches the first condition, but not the second. Hmmm...
-				body.setLinearVelocity(-2.0f, body.getLinearVelocity().y);
-			}
-		} else {
-			if(goingLeft && goingRight) {
-				body.setLinearVelocity(0.0f, body.getLinearVelocity().y);
-			} else if(goingRight) {
-				body.setLinearVelocity(1.0f, body.getLinearVelocity().y);
-			} else if(goingLeft) {//it reaches the first condition, but not the second. Hmmm...
-				body.setLinearVelocity(-1.0f, body.getLinearVelocity().y);
-			}
-		}
-		if(staminaBarState == StaminaConsumptionState.EMPTY){
-			body.setLinearVelocity(0.0f, body.getLinearVelocity().y);
-		}
+		moveSwimmer(goingLeft, goingRight);
 		
 		//HERE WE WILL UPDATE THE OXYGEN METER
 		float deltaO2;
@@ -257,7 +233,31 @@ public class Swimmer implements Disposable, GameOverSubject {
 		}
 		
 	}
-	
+
+	private void moveSwimmer(boolean goingLeft, boolean goingRight) {
+		//calculating swimmer's movement along the x axis
+		if(submergedState != SubmergedState.SWIMMER_ON_RIVERBED) {
+			if(goingLeft && goingRight) {
+				body.setLinearVelocity(0.0f, body.getLinearVelocity().y);
+			} else if(goingRight) {
+				body.setLinearVelocity(2.0f, body.getLinearVelocity().y);
+			} else if(goingLeft) {//it reaches the first condition, but not the second. Hmmm...
+				body.setLinearVelocity(-2.0f, body.getLinearVelocity().y);
+			}
+		} else {
+			if(goingLeft && goingRight) {
+				body.setLinearVelocity(0.0f, body.getLinearVelocity().y);
+			} else if(goingRight) {
+				body.setLinearVelocity(1.0f, body.getLinearVelocity().y);
+			} else if(goingLeft) {//it reaches the first condition, but not the second. Hmmm...
+				body.setLinearVelocity(-1.0f, body.getLinearVelocity().y);
+			}
+		}
+		if(staminaBarState == StaminaConsumptionState.EMPTY){
+			body.setLinearVelocity(0.0f, body.getLinearVelocity().y);
+		}
+	}
+
 	public void setPosition(float x, float y) {
 		//1) perform bounding box hit detection
 		//2) perform movement
@@ -441,5 +441,9 @@ public class Swimmer implements Disposable, GameOverSubject {
 
 	public void setSubmergedState(SubmergedState state) {
 		this.submergedState = state;
+	}
+
+	public void oxygenConsumed() {
+
 	}
 }

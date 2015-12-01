@@ -75,7 +75,6 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	SpriteBatch batch;
 	ShapeRenderer renderer;
 	Swimmer swimmer;
-	boolean A_pressed, D_pressed, Left_pressed, Right_pressed;
 	boolean goingRight, goingLeft;
 	Viewport viewport;
 	Border testBorder;
@@ -473,23 +472,18 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	public boolean keyUp(int keycode) {
 		// TODO Auto-generated method stub
 		
-		/*if(keycode == Keys.RIGHT)
-			goingRight = false;
-			//Right_pressed = false;*/
+
 		if(keycode == Keys.D) {
 			goingRight = false;
 			swimmerBody.setLinearVelocity(0.0f, swimmerBody.getLinearVelocity().y);
 		}
-			//D_pressed = false;
-		/*if(keycode == Keys.LEFT)
-			goingLeft = false;
-			//Left_pressed = false;*/
+
 		if(keycode == Keys.A) {
 			goingLeft = false;
 			swimmerBody.setLinearVelocity(0.0f, swimmerBody.getLinearVelocity().y);
 		}
-			//A_pressed = false;
-		
+
+		//cheat code for infinite stamina. V is for victory
 		if(keycode == Keys.V){
 			//toggle infinite Stamina
 			if(swimmer.getMaxStrokesInFullBar() == 18.0f) {
@@ -498,7 +492,8 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 				swimmer.setMaxStrokesInFullBar(18.0f);
 			}
 		}
-		
+
+		//cheat code for infinite oxygen. B is for breath
 		if(keycode == Keys.B){
 			if(swimmer.getO2LossDuration() == 20.0f) {
 				swimmer.setO2LossDuration(5000.0f);
@@ -638,7 +633,7 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		swimmerFixture = swimmerBody.createFixture(swimmerPoly, 1.5f);
 		swimmerFixture.setFriction(0.0f);
 		
-		swimmer = new Swimmer(playerTexture, camera, oxygenMeter, staminaMeter, progressBar, swimmerBody, startX, startY);
+		swimmer = new Swimmer(camera, oxygenMeter, staminaMeter, progressBar, swimmerBody);
 		swimmerBody.setUserData(swimmer);
 		swimmerFixture.setUserData(swimmer);
 		swimmerPoly.dispose();
