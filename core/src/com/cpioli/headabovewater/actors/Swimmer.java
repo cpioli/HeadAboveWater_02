@@ -21,45 +21,26 @@ import com.cpioli.headabovewater.utils.GameOverSubject;
 /*
  * NOTES
  * 
- * 1. remember that the head is nine pixels tall in the 32x32 thingy
+ * 1. remember that the head is nine pixels tall in the 32x32 texture
  * 2. that would mean the head is 15.75 pixels in height. Round it out to 16.
  */
-public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
-	
-	//states of play
-	public static final int SWIMMER_ABOVE_WATER = 0;
-	public static final int SWIMMER_UNDER_WATER = 1;
-	public static final int SWIMMER_EXHAUSTED_STAMINA = 2;
-	public static final int SWIMMER_EXHAUSTED_OXYGEN = 3;
-	public static final int SWIMMER_ON_RIVERBED = 4;
+public class Swimmer implements Disposable, GameOverSubject {
 
 	public enum SubmergedState {SWIMMER_ABOVE_WATER, SWIMMER_UNDER_WATER, SWIMMER_ON_RIVERBED};
 	private SubmergedState submergedState;
 
 	public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
-	private OxygenConsumptionState oxygenConsumptionState;
-
-	public enum StaminaConsumptionState {EMPTY, REPLENISHING, MIDSTROKE, FULL}
-	private StaminaConsumptionState staminaConsumptionState;
-	
-	//states of o2 consumption
-	public static final int O2_DEPLETING = 0;
-	public static final int O2_REPLENISHING = 1;
-	public static final int O2_EMPTY = 2;
-	public static final int O2_FULL = 3;
-	
+	private OxygenConsumptionState oxygenBarState;
 	private float O2LossDuration = 20.0f; //in seconds (it's shorter for testing purposes)
 	private float O2RestorationTime = 4.5f;
-	
-	public static final int STAMINA_FULL = 0;
-	public static final int STAMINA_EMPTY = 1;
-	public static final int STAMINA_REPLENISHING = 2;
-	public static final int STAMINA_MID_STROKE = 3;
-	
+
+	public enum StaminaConsumptionState {EMPTY, REPLENISHING, MIDSTROKE, FULL}
+	private StaminaConsumptionState staminaBarState;
+
+	//number of strokes one can accomplish with a full stamina bar
 	private float strokesPerBar = 16.0f;
 
 
-	//private float staminaLoss_MoveSurface = 1.0f; //one point per second
 	private float staminaLoss_MoveRiverbed = 3.0f;
 	private float staminaRestorationTime = 10.0f; //in seconds
 	float levelLength = 250.0f;
@@ -76,8 +57,8 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 	 * 5) Stamina will restore to full in 20 seconds from 0 if you rest at the bottom of the riverbed (AFTER your 5 seconds delay is up)
 	 */
 	//int submergedState;
-	int oxygenState;
-	int staminaState;
+	//int oxygenState;
+	//int staminaState;
 	public boolean onRiverbed;
 	
 	boolean gamePaused;
@@ -101,11 +82,7 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 	OxygenMeter oxygenMeter;
 	StaminaMeter staminaMeter;
 	ProgressBar progressBar;
-	
-
-
 	public Texture playerTexture;
-	public static final float STROKE_DURATION = 0.5f;
 	
 	public Swimmer(Texture texture, OrthographicCamera camera,
 			OxygenMeter oxygenMeter, StaminaMeter staminaMeter, ProgressBar
@@ -126,8 +103,8 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 		this.progressBar = progressBar;
 		//submergedState = SWIMMER_UNDER_WATER;
 		submergedState = SubmergedState.SWIMMER_UNDER_WATER;
-		oxygenState = O2_FULL;
-		staminaState = STAMINA_FULL;
+		oxygenBarState = OxygenConsumptionState.FULL;
+		staminaBarState = StaminaConsumptionState.FULL;
 		Assets.aboveSurfaceAmbience.setLooping(true);
 		Assets.belowSurfaceAmbience.setLooping(true);
 		//Assets.belowSurfaceAmbience.setVolume(0.25f);
@@ -172,23 +149,20 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 				body.setLinearVelocity(-1.0f, body.getLinearVelocity().y);
 			}
 		}
-		if(staminaState == Swimmer.STAMINA_EMPTY){
+		if(staminaBarState == StaminaConsumptionState.EMPTY){
 			body.setLinearVelocity(0.0f, body.getLinearVelocity().y);
 		}
-//		System.out.println("y velocity: " + velocity.y);
-		//System.out.println("y location: " + location.y);
-		//calculating swimmer's movement along the Y axis:
 		
 		//HERE WE WILL UPDATE THE OXYGEN METER
 		float deltaO2;
 		switch(submergedState) {
 		case SWIMMER_UNDER_WATER:
-			if(oxygenState != O2_EMPTY){
+			if(oxygenBarState != OxygenConsumptionState.EMPTY){
 				deltaO2 = oxygenMeter.meterFill.getWidth() - oxygenMeter.getMaxFill() / O2LossDuration * deltaTime;
 				float percentRemaining = oxygenMeter.meterFill.getWidth() / oxygenMeter.getMaxFill();
 				//System.out.println(deltaO2);
 				if(deltaO2 <= 0.0f) {
-					oxygenState = O2_EMPTY;
+					oxygenBarState = OxygenConsumptionState.EMPTY;
 					oxygenMeter.meterFill.setWidth(0.0f);
 					//notify of death
 					notifyObservers(GameScreen.GAME_DYING);
@@ -223,8 +197,8 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 						}
 					}, 1.506f);
 				} else {
-					if(oxygenState == O2_FULL) {
-						oxygenState = O2_DEPLETING;
+					if(oxygenBarState == OxygenConsumptionState.FULL) {
+						oxygenBarState = OxygenConsumptionState.DEPLETING;
 					}
 					oxygenMeter.meterFill.setWidth(deltaO2);
 				}
@@ -233,11 +207,11 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 			
 		case SWIMMER_ABOVE_WATER:
 			//System.out.println("We should be restoring oxygen right about now!");
-			if(oxygenState != O2_FULL) {
+			if(oxygenBarState != OxygenConsumptionState.FULL) {
 				deltaO2 = oxygenMeter.meterFill.getWidth() + oxygenMeter.getMaxFill() / O2RestorationTime * deltaTime;
 				//System.out.println("deltaO2: " + deltaO2);
 				if(deltaO2 >= oxygenMeter.getMaxFill()) {
-					oxygenState = O2_FULL;
+					oxygenBarState = OxygenConsumptionState.FULL;
 					oxygenMeter.meterFill.setWidth(oxygenMeter.getMaxFill());
 					triggeredVO_02 = false;
 					triggeredVO_03 = false;
@@ -251,27 +225,28 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 		
 		float deltaStamina;
 		//HERE WE WILL UPDATE THE STAMINA METER
-		if(this.staminaState == Swimmer.STAMINA_EMPTY) {
+		if(staminaBarState == StaminaConsumptionState.EMPTY) {
 			//stamina is empty, and we're clocking in time
 			timeBetweenStroke += deltaTime;
+			//if the penalty period has passed, resume stamina replenishment
 			if(this.timeBetweenStroke >= this.staminaExhaustionRecovery) {
-				staminaState = Swimmer.STAMINA_REPLENISHING;
+				staminaBarState = StaminaConsumptionState.REPLENISHING;
 				float remains = timeBetweenStroke - staminaExhaustionRecovery;
 				staminaMeter.meterFill.setWidth(staminaMeter.getMaxFill() / staminaRestorationTime * remains);
 			}
-		} else if (staminaState == Swimmer.STAMINA_MID_STROKE) { //stamina doesn't start immediately recovering after a swim stroke 
+		} else if (staminaBarState == StaminaConsumptionState.MIDSTROKE) { //stamina doesn't start immediately recovering after a swim stroke
 			timeBetweenStroke += deltaTime;
 			if(timeBetweenStroke >= this.staminaDefaultRecovery) {
-				staminaState = Swimmer.STAMINA_REPLENISHING;
+				staminaBarState = StaminaConsumptionState.REPLENISHING;
 				float remains = timeBetweenStroke - staminaDefaultRecovery;
 				deltaStamina = staminaMeter.meterFill.getWidth() + staminaMeter.getMaxFill() / staminaRestorationTime * remains;
 				staminaMeter.meterFill.setWidth(deltaStamina);
 			}
-		} else if (this.staminaState == Swimmer.STAMINA_REPLENISHING){
+		} else if (staminaBarState == StaminaConsumptionState.REPLENISHING){
 			if(!onRiverbed || body.getLinearVelocity().x == 0.0f) {
 				deltaStamina = staminaMeter.meterFill.getWidth() + staminaMeter.getMaxFill() / staminaRestorationTime * deltaTime;
 				if(deltaStamina >= staminaMeter.getMaxFill()) {
-					staminaState = Swimmer.STAMINA_FULL;
+					staminaBarState = StaminaConsumptionState.FULL;
 					staminaMeter.meterFill.setWidth(staminaMeter.getMaxFill());
 				} else {
 					staminaMeter.meterFill.setWidth(deltaStamina);
@@ -351,30 +326,23 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 	}
 
 	public void performStroke() {
-		//addAction(moveBy(0.0f, 15.0f, 0.5f, Interpolation.exp10Out));
-//		System.out.println("Performing a stroke");
-		//velocity.y = 2.0f;
-		
-		
-		//body.applyForceToCenter(0.0f, 10.0f, true);
-		
-		if(staminaState != STAMINA_EMPTY && location.x < 250.0f) {
+		if(staminaBarState != StaminaConsumptionState.EMPTY && location.x < 250.0f) {
 			strokeSound.stop(); //if you switched from under to above or vice-versa, the other one might not stop
 			long id = strokeSound.play();
 			if(!vo_speaking) {
-			strokeSound.setVolume(id, 1.2f);
+				strokeSound.setVolume(id, 1.2f);
 			} else {
 				strokeSound.setVolume(id, 0.4f);
 			}
-			this.timeBetweenStroke = 0.0f;
+			timeBetweenStroke = 0.0f;
 			if(staminaMeter.meterFill.getWidth() <= (staminaMeter.getMaxFill() / strokesPerBar)) { //we'll be emptying our stamina
 				staminaMeter.meterFill.setWidth(0.0f);
-				staminaState = STAMINA_EMPTY;
+				staminaBarState = StaminaConsumptionState.EMPTY;
 			} else { //consume another portion of stamina
 				body.setLinearVelocity(body.getLinearVelocity().x, 2.5f);
 				//consume stamina
 				staminaMeter.meterFill.setWidth(staminaMeter.meterFill.getWidth() - staminaMeter.getMaxFill() / strokesPerBar);
-				staminaState = Swimmer.STAMINA_MID_STROKE;
+				staminaBarState = StaminaConsumptionState.MIDSTROKE;
 				timeBetweenStroke = 0.0f;//we just made a stroke, the timer is reset
 			}
 			//no longer on riverbed
@@ -383,17 +351,6 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 			}
 			onRiverbed = false;
 		}
-		
-
-
-		//TRUE ALGORITHM
-		//IF IN THE MIDDLE OF A STROKE, YOU CAN STILL GAIN VELOCITY
-		//velocity.y += StrokeChangeInVelocity.y
-		//let's hope that one stroke, starting at 0 velocity.y, will cause 8 pixels' worth of movement in the positive y axis
-		//before gravity begins pulling him back down.
-		
-		//also, if in mid-stroke, stop the sound effect and restart it
-		
 	}
 	
 	@Override
@@ -453,8 +410,8 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 		body.setLinearVelocity(0.0f, 0.1f);
 		gamePaused = false;
 		submergedState = SubmergedState.SWIMMER_ABOVE_WATER;
-		oxygenState = O2_FULL;
-		staminaState = STAMINA_FULL;
+		oxygenBarState = OxygenConsumptionState.FULL;
+		staminaBarState = StaminaConsumptionState.FULL;
 		Assets.aboveSurfaceAmbience.setVolume(1.0f);
 		Assets.belowSurfaceAmbience.setVolume(1.0f);
 		Assets.aboveSurfaceAmbience.play();
