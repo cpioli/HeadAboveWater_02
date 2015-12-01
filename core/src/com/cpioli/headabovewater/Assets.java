@@ -56,6 +56,8 @@ public class Assets {
 	public static Skin bigOverlaySkin;
 	public static TextureAtlas bigOverlayAtlas;
 	public static Texture playerSide;
+	public static Texture playerTexture;
+	public static Texture sky;
 	
 	private boolean overlayAssetsLoaded;
 	
@@ -95,11 +97,11 @@ public class Assets {
 		manager.load("vo/HeAbWa_swimmer_vo_04.wav", Sound.class);
 		
 		manager.load("Pioli_Side.png", Texture.class);
+		manager.load("Pioli_Wk2_Sheet.png", Texture.class);
+		manager.load("sky.png", Texture.class);
 		
-		manager.load("music/SurfaceRiverAmbianceFinal.wav", Music.class);
-		manager.load("music/BelowSurfaceAmbianceFinal.wav", Music.class);
-
-		System.out.println("Diagnostics:\n" + manager.getDiagnostics());
+		manager.load("music/SurfaceRiverAmbianceFinal.ogg", Music.class);
+		manager.load("music/BelowSurfaceAmbianceFinal.ogg", Music.class);
 		manager.finishLoading();
 		
 		underwaterStroke = manager.get("sfx/swim-below.WAV"); //used
@@ -133,8 +135,8 @@ public class Assets {
 
 		//bubble = manager.get("bubble.WAV");
 		
-		aboveSurfaceAmbience = manager.get("music/SurfaceRiverAmbianceFinal.wav");
-		belowSurfaceAmbience = manager.get("music/BelowSurfaceAmbianceFinal.wav");
+		aboveSurfaceAmbience = manager.get("music/SurfaceRiverAmbianceFinal.ogg");
+		belowSurfaceAmbience = manager.get("music/BelowSurfaceAmbianceFinal.ogg");
 		
 		
 		labelStyle = new LabelStyle(myriadPro24, Color.WHITE);
@@ -142,6 +144,9 @@ public class Assets {
 		staminaMeterLabel = new Label("Stamina", labelStyle);
 		
 		playerSide = manager.get("Pioli_Side.png");
+		playerTexture = manager.get("Pioli_Wk2_Sheet.png");
+
+		sky = manager.get("sky.png");
 		
 		//manager.finishLoading();
 		System.out.println("The program has completed loading.");

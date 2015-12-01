@@ -2,9 +2,7 @@ package com.cpioli.headabovewater.screens;
 
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
-
 import java.util.ArrayList;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputProcessor;
@@ -73,8 +71,8 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	HeadAboveWater02 game;
 	Stage stage;
 	OrthographicCamera camera;
-	TextureRegion playerTexture;
-	TextureRegion sky;
+	Texture playerTexture;
+	Texture sky;
 	SpriteBatch batch;
 	ShapeRenderer renderer;
 	Swimmer swimmer;
@@ -93,6 +91,7 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	StaminaMeter staminaMeter;
 	ProgressBar progressBar;
 	Timer timer;
+	Box2DDebugRenderer b2dDebugRenderer = new Box2DDebugRenderer();
 	
 	ArrayList<RiverbedTile> riverbed;
 	float lastRiverbedTileLoc; //the location where the last Riverbed Physics tile ended
@@ -126,8 +125,8 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		viewport = new ScreenViewport();
 		stage = new Stage(viewport);
 		stage.getViewport().setScreenSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-		playerTexture = new TextureRegion(new Texture("Pioli_Wk2_Sheet.png"));
-		sky = new TextureRegion(new Texture("sky.png"));
+		playerTexture = Assets.playerTexture;
+		sky = Assets.sky;
 		camera = new OrthographicCamera(30, 20); //in meters
 		camera.position.set(0, 0, 0);
 
@@ -155,14 +154,15 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		stage.addActor(timer);
 		stage.addListener(new InputListener() {
 			public boolean keyUp(InputEvent event, int keycode) {
-				if(keycode == Keys.P){
-					if(screen.gameState == GameScreen.GAME_PAUSED) {
+				if (keycode == Keys.P) {
+					if (screen.gameState == GameScreen.GAME_PAUSED) {
 						screen.resume();
 					}
 				}
 				return false;
 			}
 		});
+		stage.setDebugAll(true);
 
 		canPause = false;
 		gameState = GAME_INTRO;
@@ -335,6 +335,7 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		this.gameState = GameScreen.GAME_PLAY;
 		//Assets.aboveSurfaceAmbience.stop();
 		//Assets.belowSurfaceAmbience.stop();
+
 	}
 	
 
@@ -344,7 +345,6 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	 * THIS IS A GAME OVER UPDATER
 	 * @see com.cpioli.headabovewater.utils.GameOverObserver#update()
 	 */
-
 
 	public void createOverlays() {
 		pauseOverlay = new Overlay(250.0f, 200.0f, 460.0f, 250.0f, "Paused", Color.BLACK, renderer);
@@ -463,7 +463,7 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 			//swimmerBody.setLinearVelocity(-2.0f, swimmerBody.getLinearVelocity().y);
 		}
 		
-		if(keycode == Keys.SHIFT_LEFT || keycode == Keys.SHIFT_RIGHT) {
+		if(keycode == Keys.CONTROL_LEFT || keycode == Keys.CONTROL_RIGHT) {
 			if(gameState == GAME_PLAY)
 				swimmer.performStroke();
 		}
@@ -508,10 +508,10 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 			}
 		}
 		
-		if(keycode == Keys.P) {
-			if(canPause && gameState != GAME_PAUSED) {
+		if(keycode == Keys.ESCAPE && canPause) {
+			if(gameState != GAME_PAUSED) {
 				this.pause();
-			} else if (canPause && gameState == GAME_PAUSED) {
+			} else {
 				System.out.println("I can RESUME!!!");
 				this.resume();
 			}

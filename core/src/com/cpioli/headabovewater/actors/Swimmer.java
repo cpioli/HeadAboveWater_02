@@ -1,10 +1,9 @@
 package com.cpioli.headabovewater.actors;
 
 import java.util.ArrayList;
-
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
@@ -33,6 +32,15 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 	public static final int SWIMMER_EXHAUSTED_STAMINA = 2;
 	public static final int SWIMMER_EXHAUSTED_OXYGEN = 3;
 	public static final int SWIMMER_ON_RIVERBED = 4;
+
+	public enum SubmergedState {SWIMMER_ABOVE_WATER, SWIMMER_UNDER_WATER, SWIMMER_ON_RIVERBED};
+	private SubmergedState submergedState;
+
+	public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
+	private OxygenConsumptionState oxygenConsumptionState;
+
+	public enum StaminaConsumptionState {EMPTY, REPLENISHING, MIDSTROKE, FULL}
+	private StaminaConsumptionState staminaConsumptionState;
 	
 	//states of o2 consumption
 	public static final int O2_DEPLETING = 0;
@@ -67,7 +75,7 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 	 * 4) moving forward on the riverbed consumes more stamina than moving forward on the water's surface by a factor of 3
 	 * 5) Stamina will restore to full in 20 seconds from 0 if you rest at the bottom of the riverbed (AFTER your 5 seconds delay is up)
 	 */
-	int submergedState;
+	//int submergedState;
 	int oxygenState;
 	int staminaState;
 	public boolean onRiverbed;
@@ -77,19 +85,13 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 	
 	private ArrayList<GameOverObserver> observers;
 	private Vector2 location; //in pixels? to replace the Actor class's responsibilities
-	private Vector2 startingPoint;
 	public Vector2 viewportLoc;
 	private float boundingBoxX = 3.0f;
 	private float boundingBoxY = 4.25f;
-	public Vector2 earthGravity, moonGravity, waterGravity; //it'll be hard to find the right gravity
-	boolean goingLeft, goingRight;
-	
+	public Vector2 waterGravity; //it'll be hard to find the right gravity
+
 	boolean triggeredVO_02, triggeredVO_03, vo_speaking;
-	
-//	private boolean CAM_MOVE_RIGHT, CAM_MOVE_LEFT, CAM_MOVE_UP, CAM_MOVE_DOWN;
-	
-	//private Sound underwaterStroke;
-	//private Sound surfaceStroke;
+
 	private Sound strokeSound; //either underwater or surface
 	
 	private Body body;
@@ -102,10 +104,10 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 	
 
 
-	public TextureRegion playerTexture;
+	public Texture playerTexture;
 	public static final float STROKE_DURATION = 0.5f;
 	
-	public Swimmer(TextureRegion texture, OrthographicCamera camera, 
+	public Swimmer(Texture texture, OrthographicCamera camera,
 			OxygenMeter oxygenMeter, StaminaMeter staminaMeter, ProgressBar
 			progressBar, Body body, float startingX, float startingY) {
 		//super();
@@ -122,7 +124,8 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 		this.oxygenMeter = oxygenMeter;
 		this.staminaMeter = staminaMeter;
 		this.progressBar = progressBar;
-		submergedState = SWIMMER_UNDER_WATER;
+		//submergedState = SWIMMER_UNDER_WATER;
+		submergedState = SubmergedState.SWIMMER_UNDER_WATER;
 		oxygenState = O2_FULL;
 		staminaState = STAMINA_FULL;
 		Assets.aboveSurfaceAmbience.setLooping(true);
@@ -318,8 +321,8 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 		location.y = y;
 		
 		// in this space, determine if the swimmer's head is above water or underwater
-		if(location.y >= -0.75f && submergedState == SWIMMER_UNDER_WATER) { //we're above water
-			submergedState = SWIMMER_ABOVE_WATER;
+		if(location.y >= -0.75f && submergedState == SubmergedState.SWIMMER_UNDER_WATER) { //we're above water
+			submergedState = SubmergedState.SWIMMER_ABOVE_WATER;
 			System.out.println("Above");
 			strokeSound = Assets.surfaceStroke;
 			Assets.belowSurfaceAmbience.pause();
@@ -329,8 +332,8 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 			}
 			//notifyObservers(submergedState); in lieu of this I have to make manual changes
 			//play a sound here
-		} else if (location.y < -0.75f && submergedState == SWIMMER_ABOVE_WATER) {
-			submergedState = SWIMMER_UNDER_WATER;
+		} else if (location.y < -0.75f && submergedState == SubmergedState.SWIMMER_ABOVE_WATER) {
+			submergedState = SubmergedState.SWIMMER_UNDER_WATER;
 			Assets.aboveSurfaceAmbience.pause();
 			Assets.belowSurfaceAmbience.play();
 			System.out.println("Below");
@@ -375,8 +378,8 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 				timeBetweenStroke = 0.0f;//we just made a stroke, the timer is reset
 			}
 			//no longer on riverbed
-			if(submergedState == SWIMMER_ON_RIVERBED) {
-				submergedState = SWIMMER_UNDER_WATER;
+			if(submergedState == SubmergedState.SWIMMER_ON_RIVERBED) {
+				submergedState = SubmergedState.SWIMMER_UNDER_WATER;
 			}
 			onRiverbed = false;
 		}
@@ -440,21 +443,16 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 	}
 	
 	public void restart() {
-		//TODO: add final information
-		//System.out.println("The Swimmer's Restart method has been called!");
-		//System.out.println("")
 		float xMovement = camera.position.x;
 		float yMovement = camera.position.y;
-		//System.out.println("Camera's total Movement: " + xMovement + ", " + yMovement);
 		camera.translate(-xMovement + viewportLoc.x, -yMovement - viewportLoc.y);
-		//camera.position.set(new Vector3(0.0f, 0.0f, 0.0f));
 		this.location.x = 0.0f;
 		this.location.y = 0.0f;
 		this.body.setTransform(new Vector2(0.0f, 0.0f), 0.0f);
 		camera.update();
-		body.setLinearVelocity(0.0f, 0.0f);
+		body.setLinearVelocity(0.0f, 0.1f);
 		gamePaused = false;
-		submergedState = SWIMMER_ABOVE_WATER;
+		submergedState = SubmergedState.SWIMMER_ABOVE_WATER;
 		oxygenState = O2_FULL;
 		staminaState = STAMINA_FULL;
 		Assets.aboveSurfaceAmbience.setVolume(1.0f);
@@ -464,6 +462,7 @@ public class Swimmer /*extends Actor*/ implements Disposable, GameOverSubject {
 		Assets.belowSurfaceAmbience.setLooping(true);
 		triggeredVO_02 = false;
 		triggeredVO_03 = false;
+		this.progressBar.reset();
 	}
 
 	//cheat code functions

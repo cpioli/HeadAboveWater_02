@@ -20,7 +20,7 @@ public class Timer extends Group {
 		timePassed = 0.0f;
 		time = Assets.bigClockNumbers;
 		time.setAlignment(Align.right);
-		time.setPosition(x, y);//, 250.0f, 50.0f);
+		time.setPosition(x, y);
 		this.addActor(time);
 		hundredths = 0;
 		minutes = 0;
@@ -33,6 +33,8 @@ public class Timer extends Group {
 
 		if(!paused) {
 			timePassed += delta;
+		} else {
+			System.out.println("PAUSED!");
 		}
 		minutes = ((int)timePassed) / 60;
 		seconds = ((int)timePassed) % 60;
@@ -61,6 +63,7 @@ public class Timer extends Group {
 	
 	public void restart() {
 		timePassed = 0.0f;
+		resume();
 	}
 	
 	public void pause() {
