@@ -9,8 +9,6 @@ import com.badlogic.gdx.scenes.scene2d.Group;
 import com.cpioli.headabovewater.Assets;
 
 public class ProgressBar extends Group {
-	
-	
 	private MeshActor pathBar; //the full length of the level represented as a line
 	final private TextureRegion playerIcon; //the location of the player on the screen
 	private Actor player;
@@ -33,7 +31,6 @@ public class ProgressBar extends Group {
 						getRotation());
 			}
 		};
-		//player.setPosition(380.0f, 600.0f);
 		player.setBounds(364.0f, 600.0f, 32.0f, 32.0f);
 
 		currentLocation = 0.0f;

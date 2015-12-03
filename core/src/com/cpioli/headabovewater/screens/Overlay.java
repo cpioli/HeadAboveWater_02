@@ -23,7 +23,6 @@ public class Overlay extends Group {
 	public Overlay(float x, float y, float width, float height, String title, Color backgroundColor, ShapeRenderer renderer) {
 		screenX = x;
 		screenY = y;
-		//this.setBounds(961.0f, y, width, height);
 		background = new MeshActor(x, y, width, height, backgroundColor, title, renderer);
 		whiteBorder1 = new Border(2.0f, x, y, width, height, Color.WHITE, renderer);
 		whiteBorder2 = new Border(2.0f, x+4, y+4.0f, width - 8.0f, height - 8.0f, Color.WHITE, renderer);
@@ -35,28 +34,4 @@ public class Overlay extends Group {
 		this.addActor(this.title);
 		
 	}
-	
-	/*public void display() {
-		this.addAction(moveTo(screenX, screenY, TWEEN_DURATION, TWEEN_INTERPOLATION));
-	}
-	
-	public void sendAway(GameScreen screen) {
-		final GameScreen myScreen = screen;
-		this.addAction(sequence(moveTo(961.0f, screenY, TWEEN_DURATION, TWEEN_INTERPOLATION),
-				new Action() {
-					@Override
-					public boolean act(float delta) {
-						myScreen.swimmer.resume();
-						return true;
-					}
-		}));
-	}*/
-	
-	/**
-	 * Immediately moves the screen back to its original location, without a tween.
-	 * This is used when the "Main Menu" button is selected.
-	 */
-	//public void sendAway() {
-	//	this.setX(961.0f);
-	//}
 }

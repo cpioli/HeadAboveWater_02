@@ -67,6 +67,12 @@ class RiverbedTile {
 
 public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 
+	private World world;
+	private Box2DDebugRenderer debugRenderer;
+	private BodyDef swimmerBodyDef;
+	private Body swimmerBody;
+	private Fixture swimmerFixture;
+
 	HeadAboveWater02 game;
 	Stage stage;
 	OrthographicCamera camera;
@@ -95,23 +101,13 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	float lastRiverbedTileLoc; //the location where the last Riverbed Physics tile ended
 	Color riverbedColor = new Color(0.38039f, 0.23921f, 0.10980f, 1.0f);
 	private int gameState;
-	//97, 61, 28
-	
 	public static final int GAME_INTRO = 0;
 	public static final int GAME_PLAY = 1;
 	public static final int GAME_FINISHED_SUCCESS = 2;
 	public static final int GAME_PAUSED = 3;
 	public static final int GAME_DYING = 4;
-	
 	boolean canPause;
-	
-	
-	private World world;
-	private Box2DDebugRenderer debugRenderer;
-	private BodyDef swimmerBodyDef;
-	private Body swimmerBody;
-	private Fixture swimmerFixture;
-	
+
 	public GameScreen(HeadAboveWater02 game) {
 		this.game = game;
 	}
@@ -182,7 +178,6 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 			world.step(1/60f, 8, 3);
 			swimmer.update(delta, goingLeft, goingRight); //this is more of a bounding box updater now
 			swimmer.setPosition(swimmerBody.getPosition().x, swimmerBody.getPosition().y);
-			//System.out.println("SwimmerBody locPos: " + swimmerBody.localPoint2);
 			camera.update();
 		}
 		Gdx.gl.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -195,8 +190,6 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		batch.draw(sky, -15.0f, -96.840f, 148.5625f, 110.906f);
 		batch.draw(sky, 133.5625f, -96.840f, 148.5625f, 110.906f);
 		batch.draw(swimmer.playerTexture, swimmerBody.getPosition().x - .75f, swimmerBody.getPosition().y - .75f, 1.5f, 1.5f);
-		//batch.draw(playerTexture, 15.625f, 0.0f);
-		//batch.draw(swimmer.playerTexture, 500.0f, 0);
 		batch.end();
 
 		renderer.setProjectionMatrix(camera.combined);
@@ -216,20 +209,13 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		renderer.end();
 		Gdx.gl.glDisable(GL20.GL_BLEND);
 		
-		renderer.setProjectionMatrix(viewport.getCamera().combined); //seems like this also affects stage.draw() since it uses ShapeRenderers...
+		renderer.setProjectionMatrix(viewport.getCamera().combined);
 		renderer.begin(ShapeType.Line);
 			renderer.setColor(Color.BLACK);
-			//renderer.rect(240.0f, 160.0f, 480.0f, 320.0f); //these are not WORLD coordinates, remember! They're pixel coordinates
-			//renderer.rect(304.0f, 160.0f, 372.0f, 320.0f);
-			//renderer.rect(384.0f, 160.0f, 192.0f, 320.0f);
 		renderer.end();
-		//debugRenderer.render(world, camera.combined);
-		
+
 		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
 		stage.draw();
-		//System.out.println("Camera position: " + camera.position);
-		//System.out.println("JavaHeap size: " + (Gdx.app.getJavaHeap() / 1000000L) + " MB");
-		//System.out.println("Native Heap size: " + (Gdx.app.getNativeHeap() / 1000000L) + " MB");
 	}
 
 	@Override
@@ -312,7 +298,6 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 			gameState = GameScreen.GAME_FINISHED_SUCCESS;
 			Gdx.input.setInputProcessor(stage);
 		}
-		//gameOverOverlay.setVisible(true);
 	}
 
 	public void reset() {
@@ -328,16 +313,9 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		gameOver = false;
 		goingRight = false;
 		goingLeft = false;
-		//camera.lookAt(0.0f, 0.0f, 0.0f);
 		paused = false;
 		this.gameState = GameScreen.GAME_PLAY;
-		//Assets.aboveSurfaceAmbience.stop();
-		//Assets.belowSurfaceAmbience.stop();
-
 	}
-	
-
-	
 
 	/*
 	 * THIS IS A GAME OVER UPDATER
@@ -347,16 +325,6 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	public void createOverlays() {
 		pauseOverlay = new Overlay(250.0f, 200.0f, 460.0f, 250.0f, "Paused", Color.BLACK, renderer);
 		final GameScreen screen = this;
-		/*ImageButton pauseMainMenuButton = Assets.bigPauseMainMenuButton;
-		pauseMainMenuButton.setPosition(100.0f, 10.0f);
-		pauseMainMenuButton.addListener(new ClickListener() {
-			public void clicked(InputEvent event, float x, float y) {
-				System.out.println("MainMenu button clicked at location " + x + ", " + y);
-				screen.pauseOverlay.sendAway();
-				screen.game.setScreen(screen.game.mainMenuScreen);
-				screen.paused = false;
-			}
-		});*/
 		
 		ImageButton resumeButtonPAUSE = Assets.bigResumeButton;
 		resumeButtonPAUSE.setPosition(100.0f, 80.0f);
@@ -375,51 +343,21 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 				screen.reset();
 			}
 		});
-		
-		//pauseOverlay.addActor(pauseMainMenuButton);
 		pauseOverlay.addActor(resumeButtonPAUSE);
 		pauseOverlay.addActor(restartButtonPAUSE);
 		
 		gameOverOverlay = new Overlay(250.0f, 200.0f, 460.0f, 250.0f, "Game Over", Color.BLACK, renderer);
-		/*ImageButton gameOverMainMenuButton = Assets.bigGameOverMainMenuButton;
-		gameOverMainMenuButton.addListener(new ClickListener() {
-			public void clicked(InputEvent event, float x, float y) {
-				screen.gameOverOverlay.sendAway();
-				screen.game.setScreen(screen.game.mainMenuScreen);
-				screen.reset();
-			}
-		});
-		gameOverOverlay.addActor(gameOverMainMenuButton);*/
 
 		ImageButton restartButtonDIED = Assets.bigRestartButtonDIED;
 		restartButtonDIED.addListener(new ClickListener() {
 			public void clicked(InputEvent event, float x, float y) {
-				//screen.gameOverOverlay.sendAway();
-				/*Assets.aboveSurfaceAmbience.setVolume(0.2f);
-				Assets.belowSurfaceAmbience.setVolume(0.2f);
-				Assets.swimmerVO_04.play();
-				delay(1.311f, new Action() {
-
-					@Override
-					public boolean act(float arg0) {
-						Assets.aboveSurfaceAmbience.setVolume(1.0f);
-						Assets.belowSurfaceAmbience.setVolume(1.0f);
-						return false;
-					}
-					
-				});*/
 				screen.reset();
 			}
 		});
 		restartButtonDIED.setPosition(350.0f, 250.0f);
-		//gameOverMainMenuButton.setPosition(100.0f, 80.0f);
-		//gameOverOverlay.addActor(gameOverMainMenuButton);
 		gameOverOverlay.addActor(restartButtonDIED);
 		gameOverOverlay.setName("GameOverOverlay");
-		
-		
 		winOverlay = new Overlay(250.0f, 200.0f, 460.0f, 250.0f, "You Win!", Color.BLACK, renderer);
-		
 		ImageButton restartButtonWIN = Assets.bigRestartButtonWIN;
 		restartButtonWIN.setPosition(350.0f, 250.0f);
 		restartButtonWIN.addListener(new ClickListener() {
@@ -454,11 +392,9 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 			
 		if(keycode == Keys.D) {
 			goingRight = true;
-			//swimmerBody.setLinearVelocity(2.0f, swimmerBody.getLinearVelocity().y);
 		}
 		if(keycode == Keys.A) {
 			goingLeft = true;
-			//swimmerBody.setLinearVelocity(-2.0f, swimmerBody.getLinearVelocity().y);
 		}
 		
 		if(keycode == Keys.CONTROL_LEFT || keycode == Keys.CONTROL_RIGHT) {
@@ -597,12 +533,6 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		
 		createRiverbedTile(13.0f, 0.0f);
 		
-		/*createRiverbedTile(5.0f, 12.5f); //36
-		createRiverbedTile(7.5f, 7.5f);
-		createRiverbedTile(5.0f, 15.0f);*/
-		
-		
-		
 		//Sky vertices are for a physics box to keep the Swimmer on top of the water surface
 		float[] skyVertices = { -16.0f, 1.0f,
 								248.0f, 1.0f,
@@ -691,17 +621,8 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		tileFixtureDef.shape = tileShape;
 		tileBody.createFixture(tileFixtureDef);
 		tileShape.dispose();
-		
-		//here I would color in all the tiles
-		
-
-		
-		//MeshActor ma = new MeshActor(lastRiverbedTileLoc, -depth - 30.0f, width, depth, riverbedColor, "", renderer);
 		riverbed.add(new RiverbedTile(lastRiverbedTileLoc, -depth - 30.0f, width, 30.0f));
-		
-		
 		lastRiverbedTileLoc += width;
-		
 	}
 	
 }

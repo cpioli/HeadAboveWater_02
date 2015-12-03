@@ -22,8 +22,7 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 	
 	private StringBuffer labelText;
 	private float maxFill;
-	public int oxygenState;
-	
+
 	public OxygenMeter(ShapeRenderer renderer, float x, float y) {
 		super.setX(x);
 		super.setY(y);
@@ -32,7 +31,6 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 		labelText = new StringBuffer();
 		labelText.append("Oxygen");
 		//makeborderthickness
-		//makecolor of shape
 		meterLabel = Assets.oxygenMeterLabel;
 		meterLabel.setAlignment(Align.right);
 		meterLabel.setText(labelText);

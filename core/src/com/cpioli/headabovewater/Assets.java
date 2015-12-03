@@ -58,9 +58,7 @@ public class Assets {
 	public static Texture playerSide;
 	public static Texture playerTexture;
 	public static Texture sky;
-	
-	private boolean overlayAssetsLoaded;
-	
+
 	public static void load() {
 		
 		System.out.println("Loading Assets!");
@@ -69,11 +67,7 @@ public class Assets {
 		}
 
 		if(!manager.containsAsset("overlay.json")) {
-
-
-			//if(manager.isLoaded("overlay.json")) System.out.println("Loaded overlay.json!");
-			manager.load("overlay.json", Skin.class);//, SkinParameter.);
-
+			manager.load("overlay.json", Skin.class);
 			manager.load("overlay.atlas", TextureAtlas.class);
 		}
 		
@@ -131,10 +125,7 @@ public class Assets {
 		
 		bigClockNumbers = new Label("0:00.00", bigLabelStyle);
 		bigFinalTime = new Label("0:00.00", bigLabelStyle);
-		
 
-		//bubble = manager.get("bubble.WAV");
-		
 		aboveSurfaceAmbience = manager.get("music/SurfaceRiverAmbianceFinal.ogg");
 		belowSurfaceAmbience = manager.get("music/BelowSurfaceAmbianceFinal.ogg");
 		
@@ -147,8 +138,6 @@ public class Assets {
 		playerTexture = manager.get("Pioli_Wk2_Sheet.png");
 
 		sky = manager.get("sky.png");
-		
-		//manager.finishLoading();
 		System.out.println("The program has completed loading.");
 	}
 	

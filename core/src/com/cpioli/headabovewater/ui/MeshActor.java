@@ -17,12 +17,10 @@ public class MeshActor extends Actor {
 	public static int VERTICAL_GRADIENT = 1;
 	//Initialization of Object fields
 	ShapeRenderer renderer;
-	
 	//if it's a gradient, then we'll use a different ShapeRenderer.rect object
 	boolean gradient;
 	Color secondaryColor;
 	int gradientOrientation;
-	
 	
 	//constructors and copy constructors
 	public MeshActor() {
@@ -43,8 +41,6 @@ public class MeshActor extends Actor {
 		super.setColor(color);
 		super.setName(name);
 		this.renderer = renderer;
-
-		//this.origin = transformOrigin.LOWER_LEFT;
 	}
 
 	
@@ -60,7 +56,6 @@ public class MeshActor extends Actor {
 	public void draw(Batch batch, float parentAlpha) {
 		batch.end();
 
-		//float tempColor = Color.toFloatBits(super.getColor().r, super.getColor().g, super.getColor().b, super.getColor().a * parentAlpha);
 		if(parentAlpha < 1.0f) {
 			Gdx.gl.glEnable(GL20.GL_BLEND);
 		}
