@@ -11,6 +11,7 @@ public class Timer extends Group {
 	private float timePassed;
 	private String MSDivisor;
 	private String SHDivisor;
+	private StringBuilder sb;
 	private boolean paused;
 	private int minutes;
 	private int seconds;
@@ -25,6 +26,7 @@ public class Timer extends Group {
 		hundredths = 0;
 		minutes = 0;
 		seconds = 0;
+		sb = new StringBuilder();
 	}
 	
 	@Override
@@ -56,9 +58,13 @@ public class Timer extends Group {
 		} else {
 			SHDivisor = ".";
 		}
-		
-		time.setText("" + Integer.toString(minutes) + MSDivisor + Integer.toString(seconds) + SHDivisor + Integer.toString(hundredths));
-		//System.out.println("Time: " + timePassed);
+		sb.delete(0, sb.length());
+		sb.append(Integer.toString(minutes))
+				.append(MSDivisor)
+				.append(Integer.toString(seconds))
+				.append(SHDivisor)
+				.append(Integer.toString(hundredths));
+		time.setText(sb.toString());
 	}
 	
 	public void restart() {
