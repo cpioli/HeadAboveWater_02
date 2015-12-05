@@ -176,10 +176,10 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	@Override
 	public void render(float delta) {
 		// TODO Auto-generated method stub
-		System.out.println("" + Float.toString(1f/delta) + "fps");
 		if(gameState == GAME_INTRO) {
 			gameState = GAME_PLAY;
 			canPause = true;
+			System.out.println("Position of swimmer: " + swimmerBody.getPosition());
 		}
 
 		Gdx.gl.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -221,6 +221,8 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
 		stage.draw();
 
+		if(this.gameState == GAME_PAUSED) return;
+		
 		accumulator += delta;
 		if(gameState == GAME_PLAY) {
 			while(accumulator >= PHYSICS_TIME_STEP) {
@@ -233,6 +235,8 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 			swimmer.setPosition(swimmerBody.getPosition().x, swimmerBody.getPosition().y);
 			camera.update();
 		}
+		//System.out.println("Swimmer velocity: " + swimmerBody.getLinearVelocity());
+		//System.out.println("Swimmer position: " + swimmerBody.getPosition());
 	}
 
 	@Override
