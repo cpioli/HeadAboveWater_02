@@ -67,11 +67,27 @@ class RiverbedTile {
 
 public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 
+	private int gameState;
+	public static final int GAME_INTRO = 0;
+	public static final int GAME_PLAY = 1;
+	public static final int GAME_FINISHED_SUCCESS = 2;
+	public static final int GAME_PAUSED = 3;
+	public static final int GAME_DYING = 4;
+
+	private float accumulator; //amount of leftover time that's not tracked by the physics simulator
+	private final float PHYSICS_TIME_STEP = 1f/60f; //this is the amount of time we have to simulate in a single frame render.
+							   //if the deltaTime is greater, we run another step of the physics engine
+
 	private World world;
 	private Box2DDebugRenderer debugRenderer;
 	private BodyDef swimmerBodyDef;
 	private Body swimmerBody;
 	private Fixture swimmerFixture;
+	Box2DDebugRenderer b2dDebugRenderer = new Box2DDebugRenderer();
+
+	boolean canPause;
+	public boolean gameOver, paused;
+	boolean goingRight, goingLeft;
 
 	HeadAboveWater02 game;
 	Stage stage;
@@ -81,10 +97,8 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	SpriteBatch batch;
 	ShapeRenderer renderer;
 	Swimmer swimmer;
-	boolean goingRight, goingLeft;
 	Viewport viewport;
 	Border testBorder;
-	public boolean gameOver, paused;
 	Color translucentBlue;
 	
 	Overlay gameOverOverlay;
@@ -95,18 +109,10 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	StaminaMeter staminaMeter;
 	ProgressBar progressBar;
 	Timer timer;
-	Box2DDebugRenderer b2dDebugRenderer = new Box2DDebugRenderer();
-	
+
 	ArrayList<RiverbedTile> riverbed;
 	float lastRiverbedTileLoc; //the location where the last Riverbed Physics tile ended
 	Color riverbedColor = new Color(0.38039f, 0.23921f, 0.10980f, 1.0f);
-	private int gameState;
-	public static final int GAME_INTRO = 0;
-	public static final int GAME_PLAY = 1;
-	public static final int GAME_FINISHED_SUCCESS = 2;
-	public static final int GAME_PAUSED = 3;
-	public static final int GAME_DYING = 4;
-	boolean canPause;
 
 	public GameScreen(HeadAboveWater02 game) {
 		this.game = game;
@@ -127,7 +133,9 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		batch = new SpriteBatch(50);
 		renderer = new ShapeRenderer(60);
 		translucentBlue = new Color(85.0f/255.0f, 138.0f/255.0f, 230.0f/255.0f, 0.5f);
-		
+
+		accumulator = 0f;
+
 		oxygenMeter = new OxygenMeter(renderer, 25.0f, 580.0f);
 		staminaMeter = new StaminaMeter(renderer, 25.0f, 605.0f);
 		progressBar = new ProgressBar(0.0f, 0.0f, 0.0f, renderer);
@@ -156,8 +164,9 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 				return false;
 			}
 		});
-		stage.setDebugAll(true);
-
+		//stage.setDebugAll(true);
+		//debugRenderer.render(world, camera.combined);
+		b2dDebugRenderer.render(world, camera.combined);
 		canPause = false;
 		gameState = GAME_INTRO;
 	}
@@ -167,24 +176,16 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	@Override
 	public void render(float delta) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("" + Float.toString(1f/delta) + "fps");
 		if(gameState == GAME_INTRO) {
-			//do an animation thing here
-			//send a text flying that says start or something
 			gameState = GAME_PLAY;
 			canPause = true;
 		}
-		if(gameState == GAME_PLAY) {
-			world.step(1/60f, 8, 3);
-			swimmer.update(delta, goingLeft, goingRight); //this is more of a bounding box updater now
-			swimmer.setPosition(swimmerBody.getPosition().x, swimmerBody.getPosition().y);
-			camera.update();
-		}
+
 		Gdx.gl.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		
-		
-		
+
+		//draw the sky and the swimmer
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
 		batch.draw(sky, -15.0f, -96.840f, 148.5625f, 110.906f);
@@ -192,6 +193,7 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		batch.draw(swimmer.playerTexture, swimmerBody.getPosition().x - .75f, swimmerBody.getPosition().y - .75f, 1.5f, 1.5f);
 		batch.end();
 
+		//draw the riverbed
 		renderer.setProjectionMatrix(camera.combined);
 		renderer.begin(ShapeType.Filled);
 		renderer.setColor(riverbedColor);
@@ -199,16 +201,18 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 			renderer.rect(riverbed.get(i).x, riverbed.get(i).y, riverbed.get(i).width, riverbed.get(i).height);
 		}
 		renderer.end();
-		
+
+		//draw the water object. 10m in height
 		//this is the water object. It is 10m tall
 		Gdx.gl.glEnable(GL20.GL_BLEND);
 		renderer.setProjectionMatrix(camera.combined);
 		renderer.begin(ShapeType.Filled);
-			renderer.setColor(translucentBlue);
-			renderer.rect(-2.0f, -30.0f, 300.0f, 30.0f);
+		renderer.setColor(translucentBlue);
+		renderer.rect(-2.0f, -30.0f, 300.0f, 30.0f);
 		renderer.end();
 		Gdx.gl.glDisable(GL20.GL_BLEND);
-		
+
+		//draw the stamina and oxygen meters
 		renderer.setProjectionMatrix(viewport.getCamera().combined);
 		renderer.begin(ShapeType.Line);
 			renderer.setColor(Color.BLACK);
@@ -216,6 +220,19 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 
 		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
 		stage.draw();
+
+		accumulator += delta;
+		if(gameState == GAME_PLAY) {
+			while(accumulator >= PHYSICS_TIME_STEP) {
+				//for each 1/60 of a second in the deltaTime (which we assume is greater than 1/60)
+				//we run a single world step
+				world.step(PHYSICS_TIME_STEP, 8, 3);
+				accumulator -= PHYSICS_TIME_STEP;
+			}
+			swimmer.update(delta, goingLeft, goingRight); //this is more of a bounding box updater now
+			swimmer.setPosition(swimmerBody.getPosition().x, swimmerBody.getPosition().y);
+			camera.update();
+		}
 	}
 
 	@Override
@@ -488,7 +505,6 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 
 	public void createPhysicsWorld(float startX, float startY) {
 		world = new World(new Vector2(0, -2.6f), true);
-		
 		createRiverbedTile(13.0f, -1.0f);
 		
 		createRiverbedTile(10.0f, 7.5f); //1
