@@ -222,7 +222,7 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		stage.draw();
 
 		if(this.gameState == GAME_PAUSED) return;
-		
+
 		accumulator += delta;
 		if(gameState == GAME_PLAY) {
 			while(accumulator >= PHYSICS_TIME_STEP) {
@@ -231,12 +231,10 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 				world.step(PHYSICS_TIME_STEP, 8, 3);
 				accumulator -= PHYSICS_TIME_STEP;
 			}
-			swimmer.update(delta, goingLeft, goingRight); //this is more of a bounding box updater now
+			swimmer.update(delta, goingLeft, goingRight);
 			swimmer.setPosition(swimmerBody.getPosition().x, swimmerBody.getPosition().y);
 			camera.update();
 		}
-		//System.out.println("Swimmer velocity: " + swimmerBody.getLinearVelocity());
-		//System.out.println("Swimmer position: " + swimmerBody.getPosition());
 	}
 
 	@Override
@@ -592,15 +590,20 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 			
 			@Override
 			public void beginContact(Contact contact) {
-				System.out.println("Landed on riverbed!");
-				swimmer.setSubmergedState(Swimmer.SubmergedState.SWIMMER_ON_RIVERBED);
+				Fixture fixtureA = contact.getFixtureA();
+				Fixture fixtureB = contact.getFixtureB();
+				if(fixtureA.getBody() != skyBody && fixtureB.getBody() != skyBody) {
+					System.out.println("Landed on riverbed!");
+					swimmer.setSubmergedState(Swimmer.SubmergedState.SWIMMER_ON_RIVERBED);
+				}
+
 			}
 			
 			@Override
 			public void endContact(Contact contact) {
 				Fixture fixtureA =  contact.getFixtureA();
 				Fixture fixtureB = contact.getFixtureB();
-				System.out.println("Contact!");
+				System.out.println("End contact!");
 				if(fixtureA.getBody() == swimmerBody) {
 					if(fixtureB.getBody() != skyBody) {
 						Assets.water.play();
