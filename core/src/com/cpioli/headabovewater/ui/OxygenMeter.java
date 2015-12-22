@@ -124,4 +124,13 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 	public void update(int submergedStatus) {
 
 	}
+
+
+	public float getO2LossDuration() {
+		return O2LossDuration;
+	}
+
+	public void setO2LossDuration(float o2LossDuration) {
+		O2LossDuration = o2LossDuration;
+	}
 }

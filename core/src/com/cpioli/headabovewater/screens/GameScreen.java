@@ -450,10 +450,10 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 
 		//cheat code for infinite oxygen. B is for breath
 		if(keycode == Keys.B){
-			if(swimmer.getO2LossDuration() == 20.0f) {
-				swimmer.setO2LossDuration(5000.0f);
-			} else if (swimmer.getO2LossDuration() == 5000.0f) {
-				swimmer.setO2LossDuration(20.0f);
+			if(oxygenMeter.getO2LossDuration() == 20.0f) {
+				oxygenMeter.setO2LossDuration(5000.0f);
+			} else if (oxygenMeter.getO2LossDuration() == 5000.0f) {
+				oxygenMeter.setO2LossDuration(20.0f);
 			}
 		}
 		
