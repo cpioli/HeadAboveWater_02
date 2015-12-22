@@ -14,18 +14,17 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 	
 	
 	private ArrayList<OxygenObserver> observers;
-	public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
-	private OxygenConsumptionState oxygenBarState;
 	private final float O2RestorationTime = 4.5f;
-
-	float x, y;
-	
-	private Border border;
-	public MeshActor meterFill;
-	private Label meterLabel;
 	private float O2LossDuration = 20.0f;
+	private Border border;
+	private Label meterLabel;
 	private StringBuffer labelText;
 	private float maxFill;
+	public MeshActor meterFill;
+	public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
+	public OxygenConsumptionState oxygenBarState;
+
+
 
 	public OxygenMeter(ShapeRenderer renderer, float x, float y) {
 		super.setX(x);
@@ -45,7 +44,9 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 		this.addActor(meterLabel);
 		
 		//oxygenState = O2_FULL;
+		oxygenBarState = OxygenConsumptionState.FULL;
 		maxFill = 94.0f;
+		observers = new ArrayList<OxygenObserver>();
 	}
 	
 	@Override
@@ -82,7 +83,6 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 		}
 		updatedOxygenValue = meterFill.getWidth() - getMaxFill() / O2LossDuration * deltaTime;
 		if(updatedOxygenValue <= 0.0f && oxygenBarState != OxygenConsumptionState.EMPTY) {
-			System.out.println("It's EMPTY!!!");
 			oxygenBarState = OxygenConsumptionState.EMPTY;
 			meterFill.setWidth(0.0f);
 			notifyObservers(OxygenConsumptionState.EMPTY);
@@ -126,5 +126,10 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 	//TODO: IMPLEMENT RESET OXYGEN METER
 	public void restart() {
 		meterFill.setWidth(maxFill);
+	}
+
+	public void reset() {
+		meterFill.setWidth(maxFill);
+		oxygenBarState = OxygenConsumptionState.FULL;
 	}
 }

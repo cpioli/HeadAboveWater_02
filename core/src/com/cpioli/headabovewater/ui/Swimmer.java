@@ -30,10 +30,10 @@ import com.cpioli.headabovewater.utils.GameOverSubject;
 public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 
 	public enum SubmergedState {SWIMMER_ABOVE_WATER, SWIMMER_UNDER_WATER, SWIMMER_ON_RIVERBED};
-	public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
+	//public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
 	public enum StaminaConsumptionState {EMPTY, REPLENISHING, MIDSTROKE, FULL}
 	private SubmergedState submergedState;
-	private OxygenConsumptionState oxygenBarState;
+	//private OxygenConsumptionState oxygenBarState;
 	private StaminaConsumptionState staminaBarState;
 
 	OrthographicCamera camera;
@@ -84,7 +84,7 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		this.staminaMeter = staminaMeter;
 		this.progressBar = progressBar;
 		submergedState = SubmergedState.SWIMMER_UNDER_WATER;
-		oxygenBarState = OxygenConsumptionState.FULL;
+		//oxygenBarState = OxygenConsumptionState.FULL;
 		staminaBarState = StaminaConsumptionState.FULL;
 		Assets.aboveSurfaceAmbience.setLooping(true);
 		Assets.belowSurfaceAmbience.setLooping(true);
@@ -95,6 +95,9 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		triggeredVO_02 = false;
 		triggeredVO_03 = false;
 		vo_speaking = false;
+
+		oxygenMeter.registerObserver((OxygenObserver)this);
+
 	}
 	
 	/*
@@ -118,8 +121,10 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 			break;
 
 			case SWIMMER_ABOVE_WATER:
-				if(oxygenBarState != OxygenConsumptionState.FULL) {
+				if(oxygenMeter.oxygenBarState != OxygenMeter.OxygenConsumptionState.FULL) {
 					percentRemaining = oxygenMeter.increaseOxygenMeter(deltaTime, this);
+				} else {
+					percentRemaining = 1.0f;
 				}
 				break;
 
@@ -189,31 +194,30 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		}
 	}
 
-	private void updateOxygenMeter(float deltaTime) {
+	/*private void updateOxygenMeter(float deltaTime) {
 		float updatedOxygenValue;
-		if(oxygenBarState == OxygenConsumptionState.EMPTY) {
+		if(oxygenMeter.oxygenBarState == oxygenMeter.OxygenConsumptionState.EMPTY) {
 			return;
 		}
 		updatedOxygenValue = oxygenMeter.meterFill.getWidth() - oxygenMeter.getMaxFill() / O2LossDuration * deltaTime;
 		float percentRemaining = oxygenMeter.meterFill.getWidth() / oxygenMeter.getMaxFill();
-		if(updatedOxygenValue <= 0.0f && oxygenBarState != OxygenConsumptionState.EMPTY) {
-			oxygenBarState = OxygenConsumptionState.EMPTY;
+		if(updatedOxygenValue <= 0.0f && oxygenMeter.oxygenBarState != oxygenMeter.OxygenConsumptionState.EMPTY) {
+			oxygenMeter.oxygenBarState = oxygenMeter.OxygenConsumptionState.EMPTY;
 			oxygenMeter.meterFill.setWidth(0.0f);
 			//notify of death
 			notifyObservers(GameScreen.GAME_DYING);
 			return;
 		}
 
-		if(oxygenBarState == OxygenConsumptionState.FULL) {
-			oxygenBarState = OxygenConsumptionState.DEPLETING;
+		if(oxygenMeter.oxygenBarState == oxygenMeter.OxygenConsumptionState.FULL) {
+			oxygenMeter.oxygenBarState = oxygenMeter.OxygenConsumptionState.DEPLETING;
 		}
 		oxygenMeter.meterFill.setWidth(updatedOxygenValue);
 		triggerVOResponse(percentRemaining);
 		return;
-	}
+	}*/
 
 	private void triggerVOResponse(float percentRemaining) {
-		System.out.println("percentRemaining: " + percentRemaining);
 		if(percentRemaining <= 0.5f && !triggeredVO_02) {
 			Assets.belowSurfaceAmbience.setVolume(0.2f);
 			Assets.aboveSurfaceAmbience.setVolume(0.2f);
@@ -379,7 +383,8 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		body.setLinearVelocity(0.0f, 0.1f);
 		gamePaused = false;
 		submergedState = SubmergedState.SWIMMER_ABOVE_WATER;
-		oxygenBarState = OxygenConsumptionState.FULL;
+		//oxygenBarState = OxygenConsumptionState.FULL;
+		oxygenMeter.reset();
 		staminaBarState = StaminaConsumptionState.FULL;
 		Assets.aboveSurfaceAmbience.setVolume(1.0f);
 		Assets.belowSurfaceAmbience.setVolume(1.0f);

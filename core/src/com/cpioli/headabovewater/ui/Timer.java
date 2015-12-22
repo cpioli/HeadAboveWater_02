@@ -36,7 +36,7 @@ public class Timer extends Group {
 		if(!paused) {
 			timePassed += delta;
 		} else {
-			System.out.println("PAUSED!");
+			//System.out.println("PAUSED!");
 		}
 		minutes = ((int)timePassed) / 60;
 		seconds = ((int)timePassed) % 60;
