@@ -6,13 +6,11 @@ import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.utils.Align;
 import com.cpioli.headabovewater.Assets;
-import com.cpioli.headabovewater.screens.GameScreen;
 
 import java.util.ArrayList;
 
 public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubject {
-	
-	
+
 	private ArrayList<OxygenObserver> observers;
 	private final float O2RestorationTime = 4.5f;
 	private float O2LossDuration = 20.0f;
@@ -21,10 +19,9 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 	private StringBuffer labelText;
 	private float maxFill;
 	public MeshActor meterFill;
+
 	public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
 	public OxygenConsumptionState oxygenBarState;
-
-
 
 	public OxygenMeter(ShapeRenderer renderer, float x, float y) {
 		super.setX(x);
@@ -71,11 +68,6 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 		
 	}
 
-	@Override
-	public void update(int submergedStatus) {
-		
-	}
-
 	public float decreaseOxygenMeter(float deltaTime) {
 		float updatedOxygenValue;
 		if(oxygenBarState == OxygenConsumptionState.EMPTY) {
@@ -117,12 +109,7 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 		return maxFill;
 	}
 
-	public void setMaxFill(float maxFill) {
-		this.maxFill = maxFill;
-	}
-	//when submerged, the oxygen meter slowly depletes
-	//when
-	
+
 	//TODO: IMPLEMENT RESET OXYGEN METER
 	public void restart() {
 		meterFill.setWidth(maxFill);
@@ -131,5 +118,10 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 	public void reset() {
 		meterFill.setWidth(maxFill);
 		oxygenBarState = OxygenConsumptionState.FULL;
+	}
+
+	@Override
+	public void update(int submergedStatus) {
+
 	}
 }

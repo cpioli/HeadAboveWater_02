@@ -30,10 +30,8 @@ import com.cpioli.headabovewater.utils.GameOverSubject;
 public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 
 	public enum SubmergedState {SWIMMER_ABOVE_WATER, SWIMMER_UNDER_WATER, SWIMMER_ON_RIVERBED};
-	//public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
 	public enum StaminaConsumptionState {EMPTY, REPLENISHING, MIDSTROKE, FULL}
 	private SubmergedState submergedState;
-	//private OxygenConsumptionState oxygenBarState;
 	private StaminaConsumptionState staminaBarState;
 
 	OrthographicCamera camera;
@@ -47,7 +45,6 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 	private ArrayList<GameOverObserver> observers;
 	private Vector2 location; //in pixels? to replace the Actor class's responsibilities
 	private Vector2 viewportLoc;
-	private final float O2RestorationTime = 4.5f;
 	private final float staminaExhaustionRecovery = 5.0f;
 	private final float staminaDefaultRecovery = 2.3f;
 	private final float staminaRestorationTime = 10.0f; //in seconds
