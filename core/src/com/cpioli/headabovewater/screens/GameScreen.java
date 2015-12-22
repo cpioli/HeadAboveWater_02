@@ -322,8 +322,8 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 	public void reset() {
 		System.out.println("RESTART! RESTART!");
 		swimmer.restart();
-		oxygenMeter.restart();
-		staminaMeter.restart();
+		oxygenMeter.reset();
+		staminaMeter.reset();
 		timer.restart();
 		Gdx.input.setInputProcessor(this);
 		gameOverOverlay.setVisible(false);

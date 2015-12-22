@@ -12,7 +12,14 @@ public class StaminaMeter extends Group {
 	private Border border;
 	public MeshActor meterFill;
 	private Label meterLabel;
-	
+	public enum StaminaConsumptionState {EMPTY, REPLENISHING, MIDSTROKE, FULL}
+	public StaminaConsumptionState staminaBarState;
+	private final float staminaExhaustionRecovery = 5.0f;
+	private final float staminaDefaultRecovery = 2.3f;
+	private final float staminaRestorationTime = 10.0f; //in seconds
+	private float staminaRecoveryDelay; //this is a timer. It is used to determine when stamina begins refilling
+	private float maxStrokesInFullBar = 16.0f;
+
 	private StringBuffer labelText;
 	
 	private float maxFill;
@@ -35,7 +42,25 @@ public class StaminaMeter extends Group {
 		
 		maxFill = 94.0f;
 	}
-	
+
+	//if the swimmer has enough stamina to execute a swim stroke, returns true
+	//else, returns false
+	public boolean decrementStaminaBar() {
+		staminaRecoveryDelay = 0.0f;
+		if(meterFill.getWidth() <= (getMaxFill() / maxStrokesInFullBar)) { //we'll be emptying our stamina
+			meterFill.setWidth(0.0f);
+			staminaBarState = StaminaConsumptionState.EMPTY;
+			return false;
+			//TODO: indicate stamina was exhausted to the player by creating a "struggle" animation
+		} else { //consume another portion of stamina
+			//body.setLinearVelocity(body.getLinearVelocity().x, 2.5f);
+			meterFill.setWidth(meterFill.getWidth() - getMaxFill() / maxStrokesInFullBar);
+			staminaBarState = StaminaConsumptionState.MIDSTROKE;
+			staminaRecoveryDelay = 0.0f;//we just made a stroke, the timer is reset
+			return true;
+		}
+	}
+
 	public float getMaxFill() {
 		return maxFill;
 	}
@@ -44,7 +69,10 @@ public class StaminaMeter extends Group {
 		this.maxFill = maxFill;
 	}
 	
-	public void restart() {
+	public void reset() {
+		staminaBarState = StaminaConsumptionState.FULL;
 		meterFill.setWidth(maxFill);
 	}
+
+
 }
