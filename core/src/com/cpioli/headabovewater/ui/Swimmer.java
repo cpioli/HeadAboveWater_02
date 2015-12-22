@@ -108,33 +108,27 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		
 		//HERE WE WILL UPDATE THE OXYGEN METER
 		float updatedOxygenValue;
+		float percentRemaining = 0f;
 		//TODO: move a lot of this code to the OxygenMeter class! It should be invisible to the Swimmer class!
 		//The Swimmer class should determine if the Swimmer loses or gains oxygen based on the submerged State
 		//Then the Swimmer class calls the appropriate method in the Oxygen class on every update
 		switch(submergedState) {
 			case SWIMMER_UNDER_WATER:
-				updateOxygenMeter(deltaTime);
+				percentRemaining = oxygenMeter.decreaseOxygenMeter(deltaTime);
 			break;
 
 			case SWIMMER_ABOVE_WATER:
 				if(oxygenBarState != OxygenConsumptionState.FULL) {
-					updatedOxygenValue = oxygenMeter.meterFill.getWidth() + oxygenMeter.getMaxFill() / O2RestorationTime * deltaTime;
-					if(updatedOxygenValue >= oxygenMeter.getMaxFill()) {
-						oxygenBarState = OxygenConsumptionState.FULL;
-						oxygenMeter.meterFill.setWidth(oxygenMeter.getMaxFill());
-						triggeredVO_02 = false;
-						triggeredVO_03 = false;
-					} else {
-						oxygenMeter.meterFill.setWidth(updatedOxygenValue);
-					}
+					percentRemaining = oxygenMeter.increaseOxygenMeter(deltaTime, this);
 				}
 				break;
 
 			case SWIMMER_ON_RIVERBED:
-				updateOxygenMeter(deltaTime);
+				percentRemaining = oxygenMeter.decreaseOxygenMeter(deltaTime);
 			break;
 		}
-		
+
+		triggerVOResponse(percentRemaining);
 		
 		float deltaStamina;
 		//HERE WE WILL UPDATE THE STAMINA METER
@@ -219,6 +213,7 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 	}
 
 	private void triggerVOResponse(float percentRemaining) {
+		System.out.println("percentRemaining: " + percentRemaining);
 		if(percentRemaining <= 0.5f && !triggeredVO_02) {
 			Assets.belowSurfaceAmbience.setVolume(0.2f);
 			Assets.aboveSurfaceAmbience.setVolume(0.2f);
@@ -234,6 +229,16 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 			triggeredVO_03 = true;
 			new Timer().scheduleTask(returnVolumeToNormal, 1.506f);
 
+		}
+
+		//if we've gotten to that point
+		if(percentRemaining > 0.8f) {
+			if (triggeredVO_02) {
+				triggeredVO_02 = false;
+			}
+			if (triggeredVO_03) {
+				triggeredVO_03 = false;
+			}
 		}
 		return;
 	}
@@ -346,14 +351,7 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		}
 	}
 
-	@Override
-	public void notifyObservers(int gameState) {
-		for(int i = 0; i < observers.size();i++) {
-			GameOverObserver goo = observers.get(i);
-			goo.update(gameState);
-		}
-		
-	}
+
 	
 	public void pause() {
 		gamePaused = true;
@@ -414,7 +412,18 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		this.submergedState = state;
 	}
 
-	public void oxygenConsumed() {
+	public void oxygenConsumed(OxygenMeter.OxygenConsumptionState ocs) {
+		if(ocs == OxygenMeter.OxygenConsumptionState.EMPTY) {
+			notifyObservers(GameScreen.GAME_DYING);
+		}
+	}
+
+	@Override
+	public void notifyObservers(int gameState) {
+		for(int i = 0; i < observers.size();i++) {
+			GameOverObserver goo = observers.get(i);
+			goo.updateGameOverObserver(gameState);
+		}
 
 	}
 }

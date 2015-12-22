@@ -280,7 +280,7 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 
 	//UPDATES FROM THE SWIMMER INDICATING NEW CHANGES TO THE GAME STATE OCCUR HERE
 	@Override
-	public void update(int incomingGameState) {
+	public void updateGameOverObserver(int incomingGameState) {
 		// TODO Auto-generated method stub
 		if(incomingGameState == GameScreen.GAME_DYING) {
 			gameOver = true;

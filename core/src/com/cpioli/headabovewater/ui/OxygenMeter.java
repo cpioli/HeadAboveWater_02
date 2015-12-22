@@ -6,6 +6,7 @@ import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.utils.Align;
 import com.cpioli.headabovewater.Assets;
+import com.cpioli.headabovewater.screens.GameScreen;
 
 import java.util.ArrayList;
 
@@ -13,13 +14,16 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 	
 	
 	private ArrayList<OxygenObserver> observers;
-	
+	public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
+	private OxygenConsumptionState oxygenBarState;
+	private final float O2RestorationTime = 4.5f;
+
 	float x, y;
 	
 	private Border border;
 	public MeshActor meterFill;
 	private Label meterLabel;
-	
+	private float O2LossDuration = 20.0f;
 	private StringBuffer labelText;
 	private float maxFill;
 
@@ -59,8 +63,10 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 	}
 
 	@Override
-	public void notifyObservers() {
-		
+	public void notifyObservers(OxygenConsumptionState ocs) {
+		for(int i = 0; i < observers.size(); i++) {
+			observers.get(i).oxygenConsumed(ocs);
+		}
 		
 	}
 
@@ -68,8 +74,45 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 	public void update(int submergedStatus) {
 		
 	}
-	
-	
+
+	public float decreaseOxygenMeter(float deltaTime) {
+		float updatedOxygenValue;
+		if(oxygenBarState == OxygenConsumptionState.EMPTY) {
+			return 0f;
+		}
+		updatedOxygenValue = meterFill.getWidth() - getMaxFill() / O2LossDuration * deltaTime;
+		if(updatedOxygenValue <= 0.0f && oxygenBarState != OxygenConsumptionState.EMPTY) {
+			System.out.println("It's EMPTY!!!");
+			oxygenBarState = OxygenConsumptionState.EMPTY;
+			meterFill.setWidth(0.0f);
+			notifyObservers(OxygenConsumptionState.EMPTY);
+			return 0f;
+		}
+
+		if(oxygenBarState == OxygenConsumptionState.FULL) {
+			oxygenBarState = OxygenConsumptionState.DEPLETING;
+		}
+		meterFill.setWidth(updatedOxygenValue);
+		float percentRemaining = meterFill.getWidth() / getMaxFill();
+
+		return percentRemaining;
+	}
+
+	public float increaseOxygenMeter(float deltaTime, Swimmer swimmer) {
+		float updatedOxygenValue = meterFill.getWidth() + getMaxFill() / O2RestorationTime * deltaTime;
+
+		if(updatedOxygenValue >= getMaxFill()) {
+			oxygenBarState = OxygenConsumptionState.FULL;
+			meterFill.setWidth(getMaxFill());
+		} else {
+			meterFill.setWidth(updatedOxygenValue);
+		}
+
+		float percentRemaining = meterFill.getWidth() / getMaxFill();
+		return percentRemaining;
+	}
+
+
 	public float getMaxFill() {
 		return maxFill;
 	}
