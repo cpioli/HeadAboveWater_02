@@ -49,18 +49,28 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 	private Vector2 viewportLoc;
 	private final float O2RestorationTime = 4.5f;
 	private final float staminaExhaustionRecovery = 5.0f;
-	private final float staminaDefaultRecovery = 2.0f;
+	private final float staminaDefaultRecovery = 2.3f;
 	private final float staminaRestorationTime = 10.0f; //in seconds
+	private float staminaRecoveryDelay; //this is a timer. It is used to determine when stamina begins refilling
 	private float boundingBoxX = 3.0f;
 	private float boundingBoxY = 4.25f;
 	private float O2LossDuration = 20.0f; //in seconds (it's shorter for testing purposes)
 	private float maxStrokesInFullBar = 16.0f;
-	private float staminaRecoveryDelay; //this is a timer. It is used to determine when stamina begins refilling
 	private float levelLength = 250.0f;
+	private final float riverSurfaceYVal = -.75f;
 	private float pausedYVelocity;
 
 	boolean gamePaused;
 	boolean triggeredVO_02, triggeredVO_03, vo_speaking;
+
+	private Task returnVolumeToNormal = new Task() {
+		@Override
+		public void run() {
+			Assets.belowSurfaceAmbience.setVolume(1.0f);
+			Assets.aboveSurfaceAmbience.setVolume(1.0f);
+			vo_speaking = false;
+		}
+	};
 
 	public Swimmer(OrthographicCamera camera, OxygenMeter oxygenMeter, StaminaMeter staminaMeter,
 				   ProgressBar progressBar, Body body) {
@@ -88,7 +98,6 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 	}
 	
 	/*
-	 * This is triggered when the player makes a swimming stroke
 	 * takes in a float deltaTime and calculates the current velocity and position
 	 * based on the rules of acceleration and gravity.
 	 * Also takes the controls as input (goingLeft, goingRight) and adds velocity to
@@ -98,68 +107,32 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		moveSwimmer(goingLeft, goingRight);
 		
 		//HERE WE WILL UPDATE THE OXYGEN METER
-		float deltaO2;
+		float updatedOxygenValue;
 		//TODO: move a lot of this code to the OxygenMeter class! It should be invisible to the Swimmer class!
+		//The Swimmer class should determine if the Swimmer loses or gains oxygen based on the submerged State
+		//Then the Swimmer class calls the appropriate method in the Oxygen class on every update
 		switch(submergedState) {
-		case SWIMMER_UNDER_WATER:
-			if(oxygenBarState != OxygenConsumptionState.EMPTY){
-				deltaO2 = oxygenMeter.meterFill.getWidth() - oxygenMeter.getMaxFill() / O2LossDuration * deltaTime;
-				float percentRemaining = oxygenMeter.meterFill.getWidth() / oxygenMeter.getMaxFill();
-				if(deltaO2 <= 0.0f) {
-					oxygenBarState = OxygenConsumptionState.EMPTY;
-					oxygenMeter.meterFill.setWidth(0.0f);
-					//notify of death
-					notifyObservers(GameScreen.GAME_DYING);
-				} else if(percentRemaining <= 0.5f && !triggeredVO_02) {
-					Assets.belowSurfaceAmbience.setVolume(0.2f);
-					Assets.aboveSurfaceAmbience.setVolume(0.2f);
-					Assets.swimmerVO_02.play();
-					vo_speaking = true;
-					new Timer().scheduleTask(new Task() {
-						@Override
-						public void run() {
-							Assets.belowSurfaceAmbience.setVolume(1.0f);
-							Assets.aboveSurfaceAmbience.setVolume(1.0f);
-							vo_speaking = false;
-						}
-					}, 2.608f);
-					triggeredVO_02 = true;
-				} else if(percentRemaining <= 0.1f && !triggeredVO_03) {
-					Assets.belowSurfaceAmbience.setVolume(0.2f);
-					Assets.aboveSurfaceAmbience.setVolume(0.2f);
-					Assets.swimmerVO_03.play();
-					vo_speaking = true;
-					triggeredVO_03 = true;
-					new Timer().scheduleTask(new Task() {
-						@Override
-						public void run() {
-							Assets.belowSurfaceAmbience.setVolume(1.0f);
-							Assets.aboveSurfaceAmbience.setVolume(1.0f);
-							vo_speaking = false;
-						}
-					}, 1.506f);
-				} else {
-					if(oxygenBarState == OxygenConsumptionState.FULL) {
-						oxygenBarState = OxygenConsumptionState.DEPLETING;
+			case SWIMMER_UNDER_WATER:
+				updateOxygenMeter(deltaTime);
+			break;
+
+			case SWIMMER_ABOVE_WATER:
+				if(oxygenBarState != OxygenConsumptionState.FULL) {
+					updatedOxygenValue = oxygenMeter.meterFill.getWidth() + oxygenMeter.getMaxFill() / O2RestorationTime * deltaTime;
+					if(updatedOxygenValue >= oxygenMeter.getMaxFill()) {
+						oxygenBarState = OxygenConsumptionState.FULL;
+						oxygenMeter.meterFill.setWidth(oxygenMeter.getMaxFill());
+						triggeredVO_02 = false;
+						triggeredVO_03 = false;
+					} else {
+						oxygenMeter.meterFill.setWidth(updatedOxygenValue);
 					}
-					oxygenMeter.meterFill.setWidth(deltaO2);
 				}
-			}
-		break;
-			
-		case SWIMMER_ABOVE_WATER:
-			if(oxygenBarState != OxygenConsumptionState.FULL) {
-				deltaO2 = oxygenMeter.meterFill.getWidth() + oxygenMeter.getMaxFill() / O2RestorationTime * deltaTime;
-				if(deltaO2 >= oxygenMeter.getMaxFill()) {
-					oxygenBarState = OxygenConsumptionState.FULL;
-					oxygenMeter.meterFill.setWidth(oxygenMeter.getMaxFill());
-					triggeredVO_02 = false;
-					triggeredVO_03 = false;
-				} else {
-					oxygenMeter.meterFill.setWidth(deltaO2);
-				}
-			}
-		break;
+				break;
+
+			case SWIMMER_ON_RIVERBED:
+				updateOxygenMeter(deltaTime);
+			break;
 		}
 		
 		
@@ -177,7 +150,7 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 			}
 		} else if (staminaBarState == StaminaConsumptionState.MIDSTROKE) { //stamina doesn't start immediately recovering after a swim stroke
 			staminaRecoveryDelay += deltaTime;
-			if(staminaRecoveryDelay >= this.staminaDefaultRecovery) {
+			if(staminaRecoveryDelay >= this.staminaDefaultRecovery) { //if the delay of stamina recovery has ended
 				staminaBarState = StaminaConsumptionState.REPLENISHING;
 				float remains = staminaRecoveryDelay - staminaDefaultRecovery;
 				deltaStamina = staminaMeter.meterFill.getWidth() + staminaMeter.getMaxFill() / staminaRestorationTime * remains;
@@ -222,6 +195,49 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		}
 	}
 
+	private void updateOxygenMeter(float deltaTime) {
+		float updatedOxygenValue;
+		if(oxygenBarState == OxygenConsumptionState.EMPTY) {
+			return;
+		}
+		updatedOxygenValue = oxygenMeter.meterFill.getWidth() - oxygenMeter.getMaxFill() / O2LossDuration * deltaTime;
+		float percentRemaining = oxygenMeter.meterFill.getWidth() / oxygenMeter.getMaxFill();
+		if(updatedOxygenValue <= 0.0f && oxygenBarState != OxygenConsumptionState.EMPTY) {
+			oxygenBarState = OxygenConsumptionState.EMPTY;
+			oxygenMeter.meterFill.setWidth(0.0f);
+			//notify of death
+			notifyObservers(GameScreen.GAME_DYING);
+			return;
+		}
+
+		if(oxygenBarState == OxygenConsumptionState.FULL) {
+			oxygenBarState = OxygenConsumptionState.DEPLETING;
+		}
+		oxygenMeter.meterFill.setWidth(updatedOxygenValue);
+		triggerVOResponse(percentRemaining);
+		return;
+	}
+
+	private void triggerVOResponse(float percentRemaining) {
+		if(percentRemaining <= 0.5f && !triggeredVO_02) {
+			Assets.belowSurfaceAmbience.setVolume(0.2f);
+			Assets.aboveSurfaceAmbience.setVolume(0.2f);
+			Assets.swimmerVO_02.play();
+			vo_speaking = true;
+			new Timer().scheduleTask(returnVolumeToNormal, 2.608f);
+			triggeredVO_02 = true;
+		} else if(percentRemaining <= 0.1f && !triggeredVO_03) {
+			Assets.belowSurfaceAmbience.setVolume(0.2f);
+			Assets.aboveSurfaceAmbience.setVolume(0.2f);
+			Assets.swimmerVO_03.play();
+			vo_speaking = true;
+			triggeredVO_03 = true;
+			new Timer().scheduleTask(returnVolumeToNormal, 1.506f);
+
+		}
+		return;
+	}
+
 	public void setPosition(float x, float y) {
 		if(gamePaused) {
 			return;
@@ -257,20 +273,18 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		location.y = y;
 		
 		// in this space, determine if the swimmer's head is above water or underwater
-		if(location.y >= -0.75f && submergedState == SubmergedState.SWIMMER_UNDER_WATER) { //we're above water
+		if(location.y >= riverSurfaceYVal && submergedState == SubmergedState.SWIMMER_UNDER_WATER) { //we're above water
 			submergedState = SubmergedState.SWIMMER_ABOVE_WATER;
-			System.out.println("Above");
 			strokeSound = Assets.surfaceStroke;
 			Assets.belowSurfaceAmbience.pause();
 			Assets.aboveSurfaceAmbience.play();
 			if(oxygenMeter.meterFill.getWidth() <= oxygenMeter.getMaxFill() / 2.0f) {
 				Assets.gasp.play();
 			}
-		} else if (location.y < -0.75f && submergedState == SubmergedState.SWIMMER_ABOVE_WATER) {
+		} else if (location.y < riverSurfaceYVal && submergedState == SubmergedState.SWIMMER_ABOVE_WATER) {
 			submergedState = SubmergedState.SWIMMER_UNDER_WATER;
 			Assets.aboveSurfaceAmbience.pause();
 			Assets.belowSurfaceAmbience.play();
-			System.out.println("Below");
 			strokeSound = Assets.underwaterStroke;
 		}
 		float newProgressPoint = progressBar.getPlayer().getX() + (dx / levelLength) * progressBar.finalLocation;
@@ -360,6 +374,9 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		this.location.x = 0.0f;
 		this.location.y = 0.0f;
 		this.body.setTransform(new Vector2(0.0f, 0.0f), 0.0f);
+		System.out.println(body.getPosition());
+		System.out.println(body.getLinearVelocity());
+
 		camera.update();
 		body.setLinearVelocity(0.0f, 0.1f);
 		gamePaused = false;
