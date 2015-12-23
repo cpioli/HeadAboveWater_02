@@ -8,7 +8,8 @@ import com.badlogic.gdx.utils.Align;
 import com.cpioli.headabovewater.Assets;
 
 public class StaminaMeter extends Group {
-	
+
+	private Swimmer swimmer;
 	private Border border;
 	public MeshActor meterFill;
 	private Label meterLabel;
@@ -35,12 +36,46 @@ public class StaminaMeter extends Group {
 		meterLabel.setAlignment(Align.right);
 		meterLabel.setText(labelText);
 		meterLabel.setPosition(100.0f, 0.0f);
-		
+		this.swimmer = swimmer;
 		this.addActor(meterFill);
 		this.addActor(border);
 		this.addActor(meterLabel);
 		
 		maxFill = 94.0f;
+	}
+
+	public void increaseStaminaBar(float deltaTime) {
+		float newStamina = 0f;
+		if(staminaBarState == StaminaMeter.StaminaConsumptionState.EMPTY) {
+			//stamina is empty, and we're clocking in time
+			staminaRecoveryDelay += deltaTime;
+			//if the penalty period has passed, resume stamina replenishment
+			if(staminaRecoveryDelay >= staminaExhaustionRecovery) {
+				staminaBarState = StaminaMeter.StaminaConsumptionState.REPLENISHING;
+				float remains = staminaRecoveryDelay - staminaExhaustionRecovery;
+				meterFill.setWidth(getMaxFill() / staminaRestorationTime * remains);
+			}
+		} else if (staminaBarState == StaminaMeter.StaminaConsumptionState.MIDSTROKE) { //stamina doesn't start immediately recovering after a swim stroke
+			staminaRecoveryDelay += deltaTime;
+			if(staminaRecoveryDelay >= this.staminaDefaultRecovery) { //if the delay of stamina recovery has ended
+				staminaBarState = StaminaMeter.StaminaConsumptionState.REPLENISHING;
+				float remains = staminaRecoveryDelay - staminaDefaultRecovery;
+				newStamina = meterFill.getWidth() + getMaxFill() / staminaRestorationTime * remains;
+				meterFill.setWidth(newStamina);
+			}
+		} else if (staminaBarState == StaminaMeter.StaminaConsumptionState.REPLENISHING) {
+			//check to make sure Player is NOT walking on the riverbed
+			if(swimmer.getSubmergedState() != Swimmer.SubmergedState.SWIMMER_ON_RIVERBED || swimmer.getSwimmerPhysicsBody().getLinearVelocity().x == 0.0f) {
+				newStamina = meterFill.getWidth() + getMaxFill() / staminaRestorationTime * deltaTime;
+				if(newStamina >= getMaxFill()) {
+					staminaBarState = StaminaMeter.StaminaConsumptionState.FULL;
+					meterFill.setWidth(getMaxFill());
+				} else {
+					meterFill.setWidth(newStamina);
+				}
+			}
+
+		}
 	}
 
 	//if the swimmer has enough stamina to execute a swim stroke, returns true
@@ -74,5 +109,7 @@ public class StaminaMeter extends Group {
 		meterFill.setWidth(maxFill);
 	}
 
-
+	public void setSwimmer(Swimmer swimmer) {
+		this.swimmer = swimmer;
+	}
 }

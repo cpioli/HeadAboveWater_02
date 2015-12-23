@@ -148,6 +148,7 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 
 		createPhysicsWorld(0.0f, 0.0f);
 		swimmer.registerObserver(this);
+		staminaMeter.setSwimmer(swimmer);
 		final GameScreen screen = this;
 		Gdx.input.setInputProcessor(this);
 		stage.addActor(oxygenMeter);

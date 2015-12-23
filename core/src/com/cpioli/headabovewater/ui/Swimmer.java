@@ -125,7 +125,7 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 
 		triggerVOResponse(percentRemaining);
 		
-		float deltaStamina;
+		/*float deltaStamina;
 		//HERE WE WILL UPDATE THE STAMINA METER
 		//TODO: all this should take place in the StaminaMeter class!
 		if(staminaMeter.staminaBarState == StaminaMeter.StaminaConsumptionState.EMPTY) {
@@ -145,7 +145,8 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 				deltaStamina = staminaMeter.meterFill.getWidth() + staminaMeter.getMaxFill() / staminaRestorationTime * remains;
 				staminaMeter.meterFill.setWidth(deltaStamina);
 			}
-		} else if (staminaMeter.staminaBarState == StaminaMeter.StaminaConsumptionState.REPLENISHING){
+		} else if (staminaMeter.staminaBarState == StaminaMeter.StaminaConsumptionState.REPLENISHING) {
+			//stamina will NOT replenish if the player is walking on the riverbed
 			if(this.submergedState != SubmergedState.SWIMMER_ON_RIVERBED || body.getLinearVelocity().x == 0.0f) {
 				deltaStamina = staminaMeter.meterFill.getWidth() + staminaMeter.getMaxFill() / staminaRestorationTime * deltaTime;
 				if(deltaStamina >= staminaMeter.getMaxFill()) {
@@ -156,7 +157,9 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 				}
 			}
 			
-		}
+		}*/
+
+		staminaMeter.increaseStaminaBar(deltaTime);
 		
 	}
 
@@ -283,8 +286,6 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		} else {
 			strokeSound.setVolume(id, 0.4f);
 		}
-		//TODO: a lot of this code has to be moved from this class into the Stamina Meter
-		//then this method will call the StaminaMeter's decrementStamina() method
 		staminaRecoveryDelay = 0.0f;
 		if(staminaMeter.decrementStaminaBar()) {
 			body.setLinearVelocity(body.getLinearVelocity().x, 2.5f);
@@ -382,5 +383,13 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 			goo.updateGameOverObserver(gameState);
 		}
 
+	}
+
+	public SubmergedState getSubmergedState() {
+		return this.submergedState;
+	}
+
+	public Body getSwimmerPhysicsBody() {
+		return this.body;
 	}
 }
