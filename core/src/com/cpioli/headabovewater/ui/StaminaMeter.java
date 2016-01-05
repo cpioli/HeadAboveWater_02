@@ -9,21 +9,21 @@ import com.cpioli.headabovewater.Assets;
 
 public class StaminaMeter extends Group {
 
+	private final float staminaExhaustionRecovery = 5.0f;
+	private final float staminaDefaultRecovery = 2.3f;
+	private final float staminaRestorationTime = 10.0f; //in seconds
 	private Swimmer swimmer;
 	private Border border;
 	public MeshActor meterFill;
 	private Label meterLabel;
+
 	public enum StaminaConsumptionState {EMPTY, REPLENISHING, MIDSTROKE, FULL}
 	public StaminaConsumptionState staminaBarState;
-	private final float staminaExhaustionRecovery = 5.0f;
-	private final float staminaDefaultRecovery = 2.3f;
-	private final float staminaRestorationTime = 10.0f; //in seconds
+
 	private float staminaRecoveryDelay; //this is a timer. It is used to determine when stamina begins refilling
 	private float maxStrokesInFullBar = 16.0f;
-
-	private StringBuffer labelText;
-	
 	private float maxFill;
+	private StringBuffer labelText;
 
 	public StaminaMeter(ShapeRenderer renderer, float x, float y) {
 		super.setX(x);
@@ -36,7 +36,6 @@ public class StaminaMeter extends Group {
 		meterLabel.setAlignment(Align.right);
 		meterLabel.setText(labelText);
 		meterLabel.setPosition(100.0f, 0.0f);
-		this.swimmer = swimmer;
 		this.addActor(meterFill);
 		this.addActor(border);
 		this.addActor(meterLabel);
@@ -45,7 +44,7 @@ public class StaminaMeter extends Group {
 	}
 
 	public void increaseStaminaBar(float deltaTime) {
-		float newStamina = 0f;
+		float newStaminaValue = 0f;
 		if(staminaBarState == StaminaMeter.StaminaConsumptionState.EMPTY) {
 			//stamina is empty, and we're clocking in time
 			staminaRecoveryDelay += deltaTime;
@@ -60,18 +59,18 @@ public class StaminaMeter extends Group {
 			if(staminaRecoveryDelay >= this.staminaDefaultRecovery) { //if the delay of stamina recovery has ended
 				staminaBarState = StaminaMeter.StaminaConsumptionState.REPLENISHING;
 				float remains = staminaRecoveryDelay - staminaDefaultRecovery;
-				newStamina = meterFill.getWidth() + getMaxFill() / staminaRestorationTime * remains;
-				meterFill.setWidth(newStamina);
+				newStaminaValue = meterFill.getWidth() + getMaxFill() / staminaRestorationTime * remains;
+				meterFill.setWidth(newStaminaValue);
 			}
 		} else if (staminaBarState == StaminaMeter.StaminaConsumptionState.REPLENISHING) {
 			//check to make sure Player is NOT walking on the riverbed
 			if(swimmer.getSubmergedState() != Swimmer.SubmergedState.SWIMMER_ON_RIVERBED || swimmer.getSwimmerPhysicsBody().getLinearVelocity().x == 0.0f) {
-				newStamina = meterFill.getWidth() + getMaxFill() / staminaRestorationTime * deltaTime;
-				if(newStamina >= getMaxFill()) {
+				newStaminaValue = meterFill.getWidth() + getMaxFill() / staminaRestorationTime * deltaTime;
+				if(newStaminaValue >= getMaxFill()) {
 					staminaBarState = StaminaMeter.StaminaConsumptionState.FULL;
 					meterFill.setWidth(getMaxFill());
 				} else {
-					meterFill.setWidth(newStamina);
+					meterFill.setWidth(newStaminaValue);
 				}
 			}
 
@@ -88,7 +87,6 @@ public class StaminaMeter extends Group {
 			return false;
 			//TODO: indicate stamina was exhausted to the player by creating a "struggle" animation
 		} else { //consume another portion of stamina
-			//body.setLinearVelocity(body.getLinearVelocity().x, 2.5f);
 			meterFill.setWidth(meterFill.getWidth() - getMaxFill() / maxStrokesInFullBar);
 			staminaBarState = StaminaConsumptionState.MIDSTROKE;
 			staminaRecoveryDelay = 0.0f;//we just made a stroke, the timer is reset

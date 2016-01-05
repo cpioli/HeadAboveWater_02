@@ -30,9 +30,7 @@ import com.cpioli.headabovewater.utils.GameOverSubject;
 public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 
 	public enum SubmergedState {SWIMMER_ABOVE_WATER, SWIMMER_UNDER_WATER, SWIMMER_ON_RIVERBED};
-	//public enum StaminaConsumptionState {EMPTY, REPLENISHING, MIDSTROKE, FULL}
 	private SubmergedState submergedState;
-	//private StaminaConsumptionState staminaBarState;
 
 	OrthographicCamera camera;
 	OxygenMeter oxygenMeter;
@@ -45,13 +43,9 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 	private ArrayList<GameOverObserver> observers;
 	private Vector2 location; //in pixels? to replace the Actor class's responsibilities
 	private Vector2 viewportLoc;
-	private final float staminaExhaustionRecovery = 5.0f;
-	private final float staminaDefaultRecovery = 2.3f;
-	private final float staminaRestorationTime = 10.0f; //in seconds
-	private float staminaRecoveryDelay; //this is a timer. It is used to determine when stamina begins refilling
 	private float boundingBoxX = 3.0f;
 	private float boundingBoxY = 4.25f;
-	private float maxStrokesInFullBar = 16.0f;
+	private float maxStrokesInFullBar = 16.0f; //used for cheat-code functionality. should move this over to Stamina Meter in the future
 	private float levelLength = 250.0f;
 	private final float riverSurfaceYVal = -.75f;
 	private float pausedYVelocity;
@@ -70,7 +64,7 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 
 	public Swimmer(OrthographicCamera camera, OxygenMeter oxygenMeter, StaminaMeter staminaMeter,
 				   ProgressBar progressBar, Body body) {
-		location = new Vector2(body.getPosition().x, body.getPosition().y); //new Vector2(body.getPosition());
+		location = new Vector2(body.getPosition().x, body.getPosition().y);
 		this.camera = camera;
 		viewportLoc = new Vector2(0.0f, 0.0f);
 		observers = new ArrayList<GameOverObserver>();
@@ -124,41 +118,6 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		}
 
 		triggerVOResponse(percentRemaining);
-		
-		/*float deltaStamina;
-		//HERE WE WILL UPDATE THE STAMINA METER
-		//TODO: all this should take place in the StaminaMeter class!
-		if(staminaMeter.staminaBarState == StaminaMeter.StaminaConsumptionState.EMPTY) {
-			//stamina is empty, and we're clocking in time
-			staminaRecoveryDelay += deltaTime;
-			//if the penalty period has passed, resume stamina replenishment
-			if(staminaRecoveryDelay >= staminaExhaustionRecovery) {
-				staminaMeter.staminaBarState = StaminaMeter.StaminaConsumptionState.REPLENISHING;
-				float remains = staminaRecoveryDelay - staminaExhaustionRecovery;
-				staminaMeter.meterFill.setWidth(staminaMeter.getMaxFill() / staminaRestorationTime * remains);
-			}
-		} else if (staminaMeter.staminaBarState == StaminaMeter.StaminaConsumptionState.MIDSTROKE) { //stamina doesn't start immediately recovering after a swim stroke
-			staminaRecoveryDelay += deltaTime;
-			if(staminaRecoveryDelay >= this.staminaDefaultRecovery) { //if the delay of stamina recovery has ended
-				staminaMeter.staminaBarState = StaminaMeter.StaminaConsumptionState.REPLENISHING;
-				float remains = staminaRecoveryDelay - staminaDefaultRecovery;
-				deltaStamina = staminaMeter.meterFill.getWidth() + staminaMeter.getMaxFill() / staminaRestorationTime * remains;
-				staminaMeter.meterFill.setWidth(deltaStamina);
-			}
-		} else if (staminaMeter.staminaBarState == StaminaMeter.StaminaConsumptionState.REPLENISHING) {
-			//stamina will NOT replenish if the player is walking on the riverbed
-			if(this.submergedState != SubmergedState.SWIMMER_ON_RIVERBED || body.getLinearVelocity().x == 0.0f) {
-				deltaStamina = staminaMeter.meterFill.getWidth() + staminaMeter.getMaxFill() / staminaRestorationTime * deltaTime;
-				if(deltaStamina >= staminaMeter.getMaxFill()) {
-					staminaMeter.staminaBarState = StaminaMeter.StaminaConsumptionState.FULL;
-					staminaMeter.meterFill.setWidth(staminaMeter.getMaxFill());
-				} else {
-					staminaMeter.meterFill.setWidth(deltaStamina);
-				}
-			}
-			
-		}*/
-
 		staminaMeter.increaseStaminaBar(deltaTime);
 		
 	}
@@ -286,7 +245,6 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		} else {
 			strokeSound.setVolume(id, 0.4f);
 		}
-		staminaRecoveryDelay = 0.0f;
 		if(staminaMeter.decrementStaminaBar()) {
 			body.setLinearVelocity(body.getLinearVelocity().x, 2.5f);
 		}

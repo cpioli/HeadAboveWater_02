@@ -50,7 +50,7 @@ import com.cpioli.headabovewater.utils.GameOverObserver;
 
 /*
  * 
- * 1 meter = 32 pixels!!!!
+ * 1 meter = 32 pixels in our current setup!
  * 
  */
 
@@ -204,7 +204,6 @@ public class GameScreen implements Screen, InputProcessor, GameOverObserver {
 		renderer.end();
 
 		//draw the water object. 10m in height
-		//this is the water object. It is 10m tall
 		Gdx.gl.glEnable(GL20.GL_BLEND);
 		renderer.setProjectionMatrix(camera.combined);
 		renderer.begin(ShapeType.Filled);

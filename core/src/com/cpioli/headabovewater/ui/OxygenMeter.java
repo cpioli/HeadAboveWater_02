@@ -11,17 +11,19 @@ import java.util.ArrayList;
 
 public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubject {
 
-	private ArrayList<OxygenObserver> observers;
 	private final float O2RestorationTime = 4.5f;
-	private float O2LossDuration = 20.0f;
+
+	private ArrayList<OxygenObserver> observers;
 	private Border border;
 	private Label meterLabel;
 	private StringBuffer labelText;
-	private float maxFill;
 	public MeshActor meterFill;
 
 	public enum OxygenConsumptionState {EMPTY, DEPLETING, REPLENISHING, FULL}
 	public OxygenConsumptionState oxygenBarState;
+
+	private float maxFill;
+	private float O2LossDuration = 20.0f;
 
 	public OxygenMeter(ShapeRenderer renderer, float x, float y) {
 		super.setX(x);
@@ -39,8 +41,6 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 		this.addActor(meterFill);
 		this.addActor(border);
 		this.addActor(meterLabel);
-		
-		//oxygenState = O2_FULL;
 		oxygenBarState = OxygenConsumptionState.FULL;
 		maxFill = 94.0f;
 		observers = new ArrayList<OxygenObserver>();
@@ -104,15 +104,8 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 		return percentRemaining;
 	}
 
-
 	public float getMaxFill() {
 		return maxFill;
-	}
-
-
-	//TODO: IMPLEMENT RESET OXYGEN METER
-	public void restart() {
-		meterFill.setWidth(maxFill);
 	}
 
 	public void reset() {
