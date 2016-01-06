@@ -58,6 +58,7 @@ public class Assets {
 	public static Texture playerSide;
 	public static Texture playerTexture;
 	public static Texture sky;
+	public static Texture swimmerSpriteSheet;
 
 	public static void load() {
 		
@@ -93,6 +94,7 @@ public class Assets {
 		manager.load("Pioli_Side.png", Texture.class);
 		manager.load("Pioli_Wk2_Sheet.png", Texture.class);
 		manager.load("sky.png", Texture.class);
+		manager.load("HeadAboveWater_SpriteSheet_OutputV2.png", Texture.class);
 		
 		manager.load("music/SurfaceRiverAmbianceFinal.ogg", Music.class);
 		manager.load("music/BelowSurfaceAmbianceFinal.ogg", Music.class);
@@ -138,6 +140,7 @@ public class Assets {
 		playerTexture = manager.get("Pioli_Wk2_Sheet.png");
 
 		sky = manager.get("sky.png");
+		swimmerSpriteSheet = manager.get("HeadAboveWater_SpriteSheet_OutputV2.png");
 		System.out.println("The program has completed loading.");
 	}
 	

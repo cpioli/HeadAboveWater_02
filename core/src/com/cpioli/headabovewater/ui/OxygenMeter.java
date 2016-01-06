@@ -9,7 +9,7 @@ import com.cpioli.headabovewater.Assets;
 
 import java.util.ArrayList;
 
-public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubject {
+public class OxygenMeter extends Group implements OxygenSubject {
 
 	private final float O2RestorationTime = 4.5f;
 
@@ -111,11 +111,6 @@ public class OxygenMeter extends Group implements SubmergedObserver, OxygenSubje
 	public void reset() {
 		meterFill.setWidth(maxFill);
 		oxygenBarState = OxygenConsumptionState.FULL;
-	}
-
-	@Override
-	public void update(int submergedStatus) {
-
 	}
 
 

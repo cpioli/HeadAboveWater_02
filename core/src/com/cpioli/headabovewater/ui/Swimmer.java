@@ -68,6 +68,7 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		this.camera = camera;
 		viewportLoc = new Vector2(0.0f, 0.0f);
 		observers = new ArrayList<GameOverObserver>();
+		//TODO: replace Swimmer.playerTexture with the Animation object we're making
 		playerTexture = Assets.playerTexture;
 		this.body = body;
 		this.oxygenMeter = oxygenMeter;
