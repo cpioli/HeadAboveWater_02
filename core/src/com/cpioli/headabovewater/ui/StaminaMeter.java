@@ -7,7 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.utils.Align;
 import com.cpioli.headabovewater.Assets;
 
-public class StaminaMeter extends Group {
+public class StaminaMeter extends Group implements SubmergedObserver {
 
 	private final float staminaExhaustionRecovery = 5.0f;
 	private final float staminaDefaultRecovery = 2.3f;
@@ -23,6 +23,7 @@ public class StaminaMeter extends Group {
 	private float staminaRecoveryDelay; //this is a timer. It is used to determine when stamina begins refilling
 	private float maxStrokesInFullBar = 16.0f;
 	private float maxFill;
+	private Swimmer.SubmergedState submergedState;
 	private StringBuffer labelText;
 
 	public StaminaMeter(ShapeRenderer renderer, float x, float y) {
@@ -39,8 +40,9 @@ public class StaminaMeter extends Group {
 		this.addActor(meterFill);
 		this.addActor(border);
 		this.addActor(meterLabel);
-		
+
 		maxFill = 94.0f;
+		submergedState = Swimmer.SubmergedState.SWIMMER_ABOVE_WATER;
 	}
 
 	public void increaseStaminaBar(float deltaTime) {
@@ -109,5 +111,10 @@ public class StaminaMeter extends Group {
 
 	public void setSwimmer(Swimmer swimmer) {
 		this.swimmer = swimmer;
+		swimmer.registerObserver(this);
+	}
+
+	public void updateSubmergedState(Swimmer.SubmergedState submergedState) {
+		this.submergedState = submergedState;
 	}
 }

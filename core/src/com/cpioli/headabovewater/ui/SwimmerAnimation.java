@@ -7,10 +7,11 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Vector2;
 import com.cpioli.headabovewater.Assets;
 
 //must implement submerged observer to change sprite state
-public class SwimmerAnimation implements SubmergedObserver {
+public class SwimmerAnimation implements SubmergedObserver, OrientationObserver {
 
     private static final int        FRAME_COLS = 8;         // #1
     private static final int        FRAME_ROWS = 8;         // #2
@@ -36,16 +37,25 @@ public class SwimmerAnimation implements SubmergedObserver {
     TextureRegion                   swimRestRightFrame;
 
     Texture                         spriteSheet;              // #4
-    SpriteBatch                      spriteBatch;            // #6
-    TextureRegion                   currentFrame;           // #7
+    SpriteBatch                     spriteBatch;            // #6
 
-    float stateTime;                                        // #8
+
+    TextureRegion                   currentFrame;           // #7
+    TextureRegion                   restFrame;
+    TextureRegion                   strokeFrame;
+    Animation                       movementAnimation;
+
+
+    float stateTime;
+    Swimmer.SubmergedState submergedState;
+    Swimmer.OrientationState orientationState;
 
     public SwimmerAnimation() {
         spriteSheet = Assets.swimmerSpriteSheet; // #9
         TextureRegion[][] tmp = TextureRegion.split(spriteSheet, spriteSheet.getWidth()/FRAME_COLS, spriteSheet.getHeight()/FRAME_ROWS);              // #10
         int index = 0;
-
+        orientationState = Swimmer.OrientationState.RIGHT;
+        submergedState = Swimmer.SubmergedState.SWIMMER_ABOVE_WATER;
         //assign the frames to each TextureRegion
 
         for (int i = 0; i < FRAME_ROWS; i++) {
@@ -55,7 +65,11 @@ public class SwimmerAnimation implements SubmergedObserver {
         }
         walkAnimation = new Animation(0.025f, walkFrames);      // #11
         spriteBatch = new SpriteBatch();                // #12
-        stateTime = 0f;                         // #13
+        stateTime = 0f;// #13
+
+        currentDirection = Direction.RIGHT;
+        AssignRightFacingAnimations(tmp);
+        AssignLeftFacingAnimations(tmp);
     }
 
     private void AssignRightFacingAnimations(TextureRegion[][] tmp) {
@@ -71,18 +85,17 @@ public class SwimmerAnimation implements SubmergedObserver {
         swimRestRightFrame = tmp[RIGHT_ANIMATION_ROW][5];
     }
 
-    private void AssignLeftFacingAnimations() {
+    private void AssignLeftFacingAnimations(TextureRegion[][] tmp) {
+        walkLeftFrames = new TextureRegion[WALK_CYCLE_FRAME_COUNT];
+        for(int i = 1, index = 0; index < WALK_CYCLE_FRAME_COUNT; i++) {
+            walkLeftFrames[index++] = tmp[LEFT_ANIMATION_ROW][i];
+        }
 
-    }
+        walkLeftAnimation = new Animation(WALK_ANIMATION_FRAME_DURATION, walkLeftFrames);
+        walkRestLeftFrame = tmp[LEFT_ANIMATION_ROW][0];
 
-    @Override
-    public void render() {
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);                        // #14
-        stateTime += Gdx.graphics.getDeltaTime();           // #15
-        currentFrame = walkAnimation.getKeyFrame(stateTime, true);  // #16
-        spriteBatch.begin();
-        spriteBatch.draw(currentFrame, 50, 50);             // #17
-        spriteBatch.end();
+        leftStrokeFrame = tmp[LEFT_ANIMATION_ROW][6];
+        swimRestLeftFrame = tmp[LEFT_ANIMATION_ROW][5];
     }
 
     //this will be a lot more complicated than it looks!
@@ -91,11 +104,43 @@ public class SwimmerAnimation implements SubmergedObserver {
     }
 
     //TODO: implement
-    //this is not a normal method. 
+    //this is not a normal method. Will require changing animation or TextureRegion when a particular submergedState
+    //occurs
     @Override
-    public void update(Swimmer.SubmergedState submergedState) {
+    public void updateSubmergedState(Swimmer.SubmergedState submergedState) {
+        this.submergedState = submergedState;
 
+        switch(submergedState) {
+            case SWIMMER_ABOVE_WATER:
+            case SWIMMER_UNDER_WATER:
+                switchToSwimAnimation();
+                break;
+
+            case SWIMMER_ON_RIVERBED:
+                switchToWalkAnimation();
+                break;
+        }
+
+        stateTime = 0.0f;
     }
 
-    public void setLeftOrRight()
+    @Override
+    public void updateOrientationState(Swimmer.OrientationState orientationState) {
+        this.orientationState = orientationState;
+        //TODO: check if we need to switch out the animations
+    }
+
+    //increments animation's stateTime
+    //also swaps left/right Animations
+    public void update(float deltaTime) {
+        
+    }
+
+    //Performs a swim stroke by swapping swimming textures
+    public void stroke() {
+        //if the swimmer is leaving the riverbed, the sprites need to change
+        if(submergedState == Swimmer.SubmergedState.SWIMMER_ON_RIVERBED) {
+
+        }
+    }
 }

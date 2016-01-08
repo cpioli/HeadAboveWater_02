@@ -274,7 +274,7 @@ public class Swimmer implements Disposable, GameOverSubject, OrientationSubject,
 	}
 
 	/*
-	 * REGISTRATION OF GAME OVER, SUBMERGED, AND ORIENTATION SUBJECT INTERFACES
+	 * REGISTRATION OF GAME OVER STATE INTERFACES
 	 */
 	@Override
 	public void registerObserver(GameOverObserver goo) {
@@ -303,6 +303,10 @@ public class Swimmer implements Disposable, GameOverSubject, OrientationSubject,
 
 	}
 
+	/*
+	 * REGISTRATION OF SUBMERGED SUBJECT STATE INTERFACES
+	 */
+
 	@Override
 	public void registerObserver(SubmergedObserver so) {
 		submergedObservers.add(so);
@@ -323,6 +327,11 @@ public class Swimmer implements Disposable, GameOverSubject, OrientationSubject,
 			so.updateSubmergedState(submergedState);
 		}
 	}
+
+
+	/*
+	 * REGISTRATION OF ORIENTATION STATE INTERFACES
+	 */
 
 	@Override
 	public void registerObserver(OrientationObserver oo) {
