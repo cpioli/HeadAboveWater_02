@@ -39,22 +39,20 @@ public class SwimmerAnimation implements SubmergedObserver, OrientationObserver 
     Texture                         spriteSheet;              // #4
     SpriteBatch                     spriteBatch;            // #6
 
-
     TextureRegion                   currentFrame;           // #7
-    TextureRegion                   restFrame;
-    TextureRegion                   strokeFrame;
-    Animation                       movementAnimation;
+    TextureRegion                   currentRestFrame;
+    TextureRegion                   currentStrokeFrame;
+    Animation                       currentAnimation;
 
 
     float stateTime;
     Swimmer.SubmergedState submergedState;
-    Swimmer.OrientationState orientationState;
+    Swimmer.OrientationState currentDirection;
 
     public SwimmerAnimation() {
         spriteSheet = Assets.swimmerSpriteSheet; // #9
         TextureRegion[][] tmp = TextureRegion.split(spriteSheet, spriteSheet.getWidth()/FRAME_COLS, spriteSheet.getHeight()/FRAME_ROWS);              // #10
         int index = 0;
-        orientationState = Swimmer.OrientationState.RIGHT;
         submergedState = Swimmer.SubmergedState.SWIMMER_ABOVE_WATER;
         //assign the frames to each TextureRegion
 
@@ -67,7 +65,10 @@ public class SwimmerAnimation implements SubmergedObserver, OrientationObserver 
         spriteBatch = new SpriteBatch();                // #12
         stateTime = 0f;// #13
 
-        currentDirection = Direction.RIGHT;
+        currentDirection = Swimmer.OrientationState.RIGHT;
+        currentAnimation = null;
+        strokeFrame = null;
+        restFrame = null;
         AssignRightFacingAnimations(tmp);
         AssignLeftFacingAnimations(tmp);
     }
@@ -113,27 +114,51 @@ public class SwimmerAnimation implements SubmergedObserver, OrientationObserver 
         switch(submergedState) {
             case SWIMMER_ABOVE_WATER:
             case SWIMMER_UNDER_WATER:
-                switchToSwimAnimation();
+                switchAnimationToSwim();
                 break;
 
             case SWIMMER_ON_RIVERBED:
-                switchToWalkAnimation();
+                switchAnimationToWalk();
                 break;
         }
 
         stateTime = 0.0f;
     }
 
+    public void switchAnimationToSwim() {
+        if(currentDirection == Swimmer.OrientationState.RIGHT) {
+            currentStrokeFrame = rightStrokeFrame;
+        } else {
+            currentStrokeFrame = leftStrokeFrame;
+        }
+    }
+
+    public void switchAnimationToWalk() {
+
+    }
+
+    public void switchAnimationToRight() {
+
+    }
+
+    public void switchAnimationToLeft() {
+
+    }
+
     @Override
     public void updateOrientationState(Swimmer.OrientationState orientationState) {
-        this.orientationState = orientationState;
+        if(currentDirection != orientationState) {
+            //swap out the left and right animations
+        }
+        this.currentDirection = orientationState;
         //TODO: check if we need to switch out the animations
+
     }
 
     //increments animation's stateTime
     //also swaps left/right Animations
     public void update(float deltaTime) {
-        
+
     }
 
     //Performs a swim stroke by swapping swimming textures

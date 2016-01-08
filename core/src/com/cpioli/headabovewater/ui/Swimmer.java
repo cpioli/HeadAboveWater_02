@@ -70,17 +70,21 @@ public class Swimmer implements Disposable, GameOverSubject, OrientationSubject,
 				   ProgressBar progressBar, Body body) {
 		location = new Vector2(body.getPosition().x, body.getPosition().y);
 		this.camera = camera;
+		this.body = body;
+		this.oxygenMeter = oxygenMeter;
+		this.staminaMeter = staminaMeter;
+		this.progressBar = progressBar;
+
 		viewportLoc = new Vector2(0.0f, 0.0f);
+		submergedState = SubmergedState.SWIMMER_UNDER_WATER;
+		orientationState = OrientationState.RIGHT;
 		gameOverObservers = new ArrayList<GameOverObserver>();
 		submergedObservers = new ArrayList<SubmergedObserver>();
 		orientationObservers = new ArrayList<OrientationObserver>();
 		//TODO: replace Swimmer.playerTexture with the Animation object we're making
 		playerTexture = Assets.playerTexture;
-		this.body = body;
-		this.oxygenMeter = oxygenMeter;
-		this.staminaMeter = staminaMeter;
-		this.progressBar = progressBar;
-		submergedState = SubmergedState.SWIMMER_UNDER_WATER;
+
+
 		//staminaBarState = StaminaConsumptionState.FULL;
 		Assets.aboveSurfaceAmbience.setLooping(true);
 		Assets.belowSurfaceAmbience.setLooping(true);
@@ -220,6 +224,7 @@ public class Swimmer implements Disposable, GameOverSubject, OrientationSubject,
 		// in this space, determine if the swimmer's head is above water or underwater
 		if(location.y >= riverSurfaceYVal && submergedState == SubmergedState.SWIMMER_UNDER_WATER) { //we're above water
 			submergedState = SubmergedState.SWIMMER_ABOVE_WATER;
+			notifyObservers(submergedState);
 			strokeSound = Assets.surfaceStroke;
 			Assets.belowSurfaceAmbience.pause();
 			Assets.aboveSurfaceAmbience.play();
@@ -228,6 +233,7 @@ public class Swimmer implements Disposable, GameOverSubject, OrientationSubject,
 			}
 		} else if (location.y < riverSurfaceYVal && submergedState == SubmergedState.SWIMMER_ABOVE_WATER) {
 			submergedState = SubmergedState.SWIMMER_UNDER_WATER;
+			notifyObservers(submergedState);
 			Assets.aboveSurfaceAmbience.pause();
 			Assets.belowSurfaceAmbience.play();
 			strokeSound = Assets.underwaterStroke;
@@ -258,6 +264,7 @@ public class Swimmer implements Disposable, GameOverSubject, OrientationSubject,
 		//no longer on riverbed
 		if(submergedState == SubmergedState.SWIMMER_ON_RIVERBED) {
 			submergedState = SubmergedState.SWIMMER_UNDER_WATER;
+			notifyObservers(submergedState);
 		}
 	}
 	
@@ -401,6 +408,7 @@ public class Swimmer implements Disposable, GameOverSubject, OrientationSubject,
 
 	public void setSubmergedState(SubmergedState state) {
 		this.submergedState = state;
+		notifyObservers(submergedState);
 	}
 
 
