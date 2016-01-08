@@ -27,10 +27,12 @@ import com.cpioli.headabovewater.utils.GameOverSubject;
  * 4) moving forward on the riverbed consumes more stamina than moving forward on the water's surface by a factor of 3
  * 5) Stamina will restore to full in 20 seconds from 0 if you rest at the bottom of the riverbed (AFTER your 5 seconds delay is up)
 */
-public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
+public class Swimmer implements Disposable, GameOverSubject, OrientationSubject, SubmergedSubject, OxygenObserver {
 
 	public enum SubmergedState {SWIMMER_ABOVE_WATER, SWIMMER_UNDER_WATER, SWIMMER_ON_RIVERBED};
 	private SubmergedState submergedState;
+	public enum OrientationState {LEFT, RIGHT};
+	private OrientationState orientationState;
 
 	OrthographicCamera camera;
 	OxygenMeter oxygenMeter;
@@ -40,7 +42,9 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 
 	private Sound strokeSound; //either underwater or surface
 	private Body body;
-	private ArrayList<GameOverObserver> observers;
+	private ArrayList<GameOverObserver> gameOverObservers;
+	private ArrayList<SubmergedObserver> submergedObservers;
+	private ArrayList<OrientationObserver> orientationObservers;
 	private Vector2 location; //in pixels? to replace the Actor class's responsibilities
 	private Vector2 viewportLoc;
 	private float boundingBoxX = 3.0f;
@@ -67,7 +71,9 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		location = new Vector2(body.getPosition().x, body.getPosition().y);
 		this.camera = camera;
 		viewportLoc = new Vector2(0.0f, 0.0f);
-		observers = new ArrayList<GameOverObserver>();
+		gameOverObservers = new ArrayList<GameOverObserver>();
+		submergedObservers = new ArrayList<SubmergedObserver>();
+		orientationObservers = new ArrayList<OrientationObserver>();
 		//TODO: replace Swimmer.playerTexture with the Animation object we're making
 		playerTexture = Assets.playerTexture;
 		this.body = body;
@@ -267,16 +273,75 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		this.location = location;
 	}
 
+	/*
+	 * REGISTRATION OF GAME OVER, SUBMERGED, AND ORIENTATION SUBJECT INTERFACES
+	 */
 	@Override
 	public void registerObserver(GameOverObserver goo) {
-		observers.add(goo);
+		gameOverObservers.add(goo);
 	}
 
 	@Override
 	public void removeObserver(GameOverObserver goo) {
-		int i = observers.indexOf(goo);
+		int i = gameOverObservers.indexOf(goo);
 		if(i>= 0) {
-			observers.remove(i);
+			gameOverObservers.remove(i);
+		}
+	}
+
+	public void oxygenConsumed(OxygenMeter.OxygenConsumptionState ocs) {
+		if(ocs == OxygenMeter.OxygenConsumptionState.EMPTY) {
+			notifyObservers(GameScreen.GAME_DYING);
+		}
+	}
+	@Override
+	public void notifyObservers(int gameState) {
+		for(int i = 0; i < gameOverObservers.size();i++) {
+			GameOverObserver goo = gameOverObservers.get(i);
+			goo.updateGameOverObserver(gameState);
+		}
+
+	}
+
+	@Override
+	public void registerObserver(SubmergedObserver so) {
+		submergedObservers.add(so);
+	}
+
+	@Override
+	public void removeObserver(SubmergedObserver so) {
+		int i = submergedObservers.indexOf(so);
+		if(i>=0) {
+			submergedObservers.remove(i);
+		}
+	}
+
+	@Override
+	public void notifyObservers(SubmergedState submergedState) {
+		for(int i = 0; i < submergedObservers.size(); i++) {
+			SubmergedObserver so = submergedObservers.get(i);
+			so.updateSubmergedState(submergedState);
+		}
+	}
+
+	@Override
+	public void registerObserver(OrientationObserver oo) {
+		orientationObservers.add(oo);
+	}
+
+	@Override
+	public void removeObserver(OrientationObserver oo) {
+		int i = orientationObservers.indexOf(oo);
+		if(i>=0) {
+			orientationObservers.remove(i);
+		}
+	}
+
+	@Override
+	public void notifyObservers(OrientationState orientationState) {
+		for(int i = 0; i < orientationObservers.size(); i++) {
+			OrientationObserver oo = orientationObservers.get(i);
+			oo.updateOrientationState(orientationState);
 		}
 	}
 
@@ -329,20 +394,6 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 		this.submergedState = state;
 	}
 
-	public void oxygenConsumed(OxygenMeter.OxygenConsumptionState ocs) {
-		if(ocs == OxygenMeter.OxygenConsumptionState.EMPTY) {
-			notifyObservers(GameScreen.GAME_DYING);
-		}
-	}
-
-	@Override
-	public void notifyObservers(int gameState) {
-		for(int i = 0; i < observers.size();i++) {
-			GameOverObserver goo = observers.get(i);
-			goo.updateGameOverObserver(gameState);
-		}
-
-	}
 
 	public SubmergedState getSubmergedState() {
 		return this.submergedState;
@@ -351,4 +402,5 @@ public class Swimmer implements Disposable, GameOverSubject, OxygenObserver {
 	public Body getSwimmerPhysicsBody() {
 		return this.body;
 	}
+
 }

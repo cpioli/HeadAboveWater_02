@@ -1,0 +1,8 @@
+package com.cpioli.headabovewater.ui;
+
+public interface OrientationSubject {
+    public void registerObserver(OrientationObserver oo);
+    public void removeObserver(OrientationObserver oo);
+    public void notifyObservers(Swimmer.OrientationState os);
+
+}
