@@ -31,7 +31,7 @@ public class Swimmer implements Disposable, GameOverSubject, OrientationSubject,
 
 	public enum SubmergedState {SWIMMER_ABOVE_WATER, SWIMMER_UNDER_WATER, SWIMMER_ON_RIVERBED};
 	private SubmergedState submergedState;
-	public enum OrientationState {LEFT, RIGHT};
+	public enum OrientationState {LEFT, RIGHT, STILL};
 	private OrientationState orientationState;
 
 	OrthographicCamera camera;
@@ -135,23 +135,45 @@ public class Swimmer implements Disposable, GameOverSubject, OrientationSubject,
 
 	private void moveSwimmer(boolean goingLeft, boolean goingRight) {
 		//calculating swimmer's movement along the x axis
-		if(submergedState != SubmergedState.SWIMMER_ON_RIVERBED) {
-			if(goingLeft && goingRight) {
+		float x = 0f;
+		float y = 0f;
+		if(goingLeft && goingRight) {
+			x = 0f;
+			orientationState = OrientationState.STILL;
+		} else if(goingLeft) {
+			x = -1f;
+			orientationState = OrientationState.LEFT;
+		} else if(goingRight) {
+			x = 1f;
+			orientationState = OrientationState.RIGHT;
+		}
+		notifyObservers(orientationState);
+
+		if(submergedState != SubmergedState.SWIMMER_ON_RIVERBED) { //if we're not walking on the riverbed
+			x *= 2.0f; //we're swimming and the vector value is doubled
+		}
+
+		body.setLinearVelocity(x, body.getLinearVelocity().y);
+			/*if(goingLeft && goingRight) {
 				body.setLinearVelocity(0.0f, body.getLinearVelocity().y);
+				orientationState = OrientationState.STILL;
 			} else if(goingRight) {
 				body.setLinearVelocity(2.0f, body.getLinearVelocity().y);
-			} else if(goingLeft) {//it reaches the first condition, but not the second. Hmmm...
+				orientationState = OrientationState.RIGHT;
+			} else if(goingLeft) {
 				body.setLinearVelocity(-2.0f, body.getLinearVelocity().y);
+				orientationState = OrientationState.LEFT;
 			}
 		} else {
 			if(goingLeft && goingRight) {
 				body.setLinearVelocity(0.0f, body.getLinearVelocity().y);
+
 			} else if(goingRight) {
 				body.setLinearVelocity(1.0f, body.getLinearVelocity().y);
 			} else if(goingLeft) {//it reaches the first condition, but not the second. Hmmm...
 				body.setLinearVelocity(-1.0f, body.getLinearVelocity().y);
 			}
-		}
+		}*/
 		if(staminaMeter.staminaBarState == StaminaMeter.StaminaConsumptionState.EMPTY){
 			body.setLinearVelocity(0.0f, body.getLinearVelocity().y);
 		}

@@ -42,7 +42,7 @@ public class SwimmerAnimation implements SubmergedObserver, OrientationObserver 
     TextureRegion                   currentFrame;           // #7
     TextureRegion                   currentRestFrame;
     TextureRegion                   currentStrokeFrame;
-    Animation                       currentAnimation;
+    Animation                       currentWalkAnimation;
 
 
     float stateTime;
@@ -66,9 +66,9 @@ public class SwimmerAnimation implements SubmergedObserver, OrientationObserver 
         stateTime = 0f;// #13
 
         currentDirection = Swimmer.OrientationState.RIGHT;
-        currentAnimation = null;
-        strokeFrame = null;
-        restFrame = null;
+        currentWalkAnimation = null;
+        currentStrokeFrame = null;
+        currentRestFrame = null;
         AssignRightFacingAnimations(tmp);
         AssignLeftFacingAnimations(tmp);
     }
@@ -109,32 +109,10 @@ public class SwimmerAnimation implements SubmergedObserver, OrientationObserver 
     //occurs
     @Override
     public void updateSubmergedState(Swimmer.SubmergedState submergedState) {
+        if(this.submergedState != submergedState) {
+            stateTime = 0.0f;
+        }
         this.submergedState = submergedState;
-
-        switch(submergedState) {
-            case SWIMMER_ABOVE_WATER:
-            case SWIMMER_UNDER_WATER:
-                switchAnimationToSwim();
-                break;
-
-            case SWIMMER_ON_RIVERBED:
-                switchAnimationToWalk();
-                break;
-        }
-
-        stateTime = 0.0f;
-    }
-
-    public void switchAnimationToSwim() {
-        if(currentDirection == Swimmer.OrientationState.RIGHT) {
-            currentStrokeFrame = rightStrokeFrame;
-        } else {
-            currentStrokeFrame = leftStrokeFrame;
-        }
-    }
-
-    public void switchAnimationToWalk() {
-
     }
 
     public void switchAnimationToRight() {
@@ -159,6 +137,11 @@ public class SwimmerAnimation implements SubmergedObserver, OrientationObserver 
     //also swaps left/right Animations
     public void update(float deltaTime) {
 
+    }
+
+    public TextureRegion getCurrentFrame() {
+        TextureRegion currentFrame = null;
+        if()
     }
 
     //Performs a swim stroke by swapping swimming textures
